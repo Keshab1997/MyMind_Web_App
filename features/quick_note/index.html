@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Note</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <div class="note-container">
+        <div class="header">
+            <span class="material-icons close-btn" onclick="history.back()">close</span>
+            <span class="title">Create a new note</span>
+            <span class="material-icons check-btn" id="save-note-btn">check</span>
+        </div>
+
+        <!-- spellcheck="true" ব্রাউজারের ডিফল্ট চেকার অন রাখবে -->
+        <textarea id="note-area" placeholder="Start typing here..." spellcheck="true"></textarea>
+        
+        <!-- Bottom Action Bar -->
+        <div class="keyboard-bar">
+            <span id="btn-format-case" style="cursor: pointer; font-weight: bold; padding: 5px;">Aa</span>
+            <span class="material-icons" id="btn-list" style="cursor: pointer;">format_list_bulleted</span>
+            <span class="material-icons" id="btn-image" style="cursor: pointer;">image</span>
+            <!-- নতুন স্পেলচেক বাটন -->
+            <span class="material-icons" id="btn-spellcheck" style="cursor: pointer;">spellcheck</span>
+            
+            <input type="file" id="note-file-input" accept="image/*" hidden>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>

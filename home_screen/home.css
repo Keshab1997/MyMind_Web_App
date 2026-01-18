@@ -15,6 +15,46 @@ header { padding: 15px; display: flex; gap: 10px; align-items: center; position:
 .card-placeholder { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
 .favicon-img { width: 48px; height: 48px; }
 
+/* Beautiful Note Card Style */
+.card.note-card {
+    background: #FFF9C4;
+    border: none;
+    position: relative;
+}
+
+.note-bg-1 { background-color: #FFF9C4 !important; }
+.note-bg-2 { background-color: #F3E5F5 !important; }
+.note-bg-3 { background-color: #E8F5E9 !important; }
+.note-bg-4 { background-color: #E3F2FD !important; }
+
+.note-body {
+    padding: 20px;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.note-preview-text {
+    font-family: 'Georgia', serif;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #444;
+    font-style: italic;
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.note-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 18px;
+    color: rgba(0,0,0,0.2);
+}
+
 .card-content { padding: 12px; max-height: 100px; overflow: hidden; }
 .card-title { 
     font-weight: bold; 

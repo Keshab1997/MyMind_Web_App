@@ -22,42 +22,64 @@ async function loadDetail() {
         alert("Link not found!");
     } else {
         currentData = data;
-
-        // 1. Header & Visit Button
         document.getElementById('header-title').innerText = data.title || "Untitled";
-        document.getElementById('visit-btn').onclick = () => window.open(data.url, '_blank');
-
-        // 2. Hero Card Logic
-        const heroContainer = document.getElementById('hero-container');
-        const youtubeId = getYouTubeId(data.url);
         
-        const titleOverlay = `
-            <div class="gradient-overlay"></div>
-            <div class="card-text">
-                <h2>${data.title}</h2>
-                <p style="font-size: 12px; opacity: 0.8; margin-top: 5px;">${new URL(data.url).hostname}</p>
-            </div>
-        `;
+        const heroContainer = document.getElementById('hero-container');
+        const visitBtn = document.getElementById('visit-btn');
 
-        if (youtubeId) {
+        // 🔥 Check if this is a note (no URL)
+        const isNote = !data.url || data.url.trim() === "";
+        
+        if (isNote) {
+            visitBtn.style.display = "none";
+            heroContainer.classList.add('bg-note');
             heroContainer.innerHTML = `
-                <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${youtubeId}?controls=0" frameborder="0" allowfullscreen style="border-radius: 24px;"></iframe>
-            `;
-        } else if (data.image_url) {
-            heroContainer.innerHTML = `
-                <img src="${data.image_url}" class="hero-img">
-                <div class="play-overlay" onclick="window.open('${data.url}', '_blank')">
-                    <span class="material-icons" style="font-size: 30px; color: white;">play_arrow</span>
+                <div class="detail-note-paper">
+                    <div class="detail-note-text">${data.note || data.title}</div>
                 </div>
-                ${titleOverlay}
             `;
         } else {
-            heroContainer.innerHTML = `
-                <div style="width:100%; height:100%; background:#333; display:flex; justify-content:center; align-items:center;">
-                    <span class="material-icons" style="font-size:50px; color:white;">link</span>
+            visitBtn.style.display = "flex";
+            visitBtn.onclick = () => window.open(data.url, '_blank');
+
+            // 2. Hero Card Logic
+            const youtubeId = getYouTubeId(data.url);
+        
+            let hostname = "Link";
+            try {
+                hostname = new URL(data.url).hostname;
+            } catch(e) {
+                console.warn('Invalid URL:', data.url);
+            }
+            
+            const titleOverlay = `
+                <div class="gradient-overlay"></div>
+                <div class="card-text">
+                    <h2>${data.title}</h2>
+                    <p style="font-size: 12px; opacity: 0.9; margin-top: 5px; color: #ddd;">${hostname}</p>
                 </div>
-                ${titleOverlay}
             `;
+
+            if (youtubeId) {
+                heroContainer.innerHTML = `
+                    <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${youtubeId}?controls=0" frameborder="0" allowfullscreen style="border-radius: 24px;"></iframe>
+                `;
+            } else if (data.image_url) {
+                heroContainer.innerHTML = `
+                    <img src="${data.image_url}" class="hero-img">
+                    <div class="play-overlay" onclick="window.open('${data.url}', '_blank')">
+                        <span class="material-icons" style="font-size: 30px; color: white;">play_arrow</span>
+                    </div>
+                    ${titleOverlay}
+                `;
+            } else {
+                heroContainer.innerHTML = `
+                    <div style="width:100%; height:100%; background:#333; display:flex; justify-content:center; align-items:center;">
+                        <span class="material-icons" style="font-size:50px; color:white;">link</span>
+                    </div>
+                    ${titleOverlay}
+                `;
+            }
         }
 
         // 3. Tags Display
@@ -167,9 +189,13 @@ document.getElementById('share-btn').onclick = async () => {
 };
 
 function getYouTubeId(url) {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
+    try {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    } catch(e) {
+        return null;
+    }
 }
 
 document.getElementById('delete-btn').onclick = async () => {

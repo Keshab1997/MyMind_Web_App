@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="home.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="manifest" href="../manifest.json">
+    <link rel="stylesheet" href="../features/dark_mode/dark_mode.css">
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('../sw.js')
@@ -14,6 +15,7 @@
                 .catch(err => console.error('SW Error:', err));
         }
     </script>
+    <script defer src="../features/dark_mode/dark_mode.js"></script>
 </head>
 <body>
     <!-- Top Bar -->
@@ -33,6 +35,7 @@
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
         <div class="nav-item active"><span class="material-icons">dashboard</span><span>Everything</span></div>
+        <div class="nav-item" onclick="window.location.href='../features/quick_note/index.html'"><span class="material-icons">edit_note</span><span>Note</span></div>
         <div class="nav-item"><span class="material-icons">circle</span><span>Spaces</span></div>
         <div class="nav-item" onclick="window.location.href='../profile_screen/profile.html'">
             <span class="material-icons">person</span><span>Profile</span>

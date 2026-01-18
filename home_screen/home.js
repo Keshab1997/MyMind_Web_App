@@ -208,41 +208,71 @@ function renderFeed(dataList) {
 
     dataList.forEach(item => {
         const card = document.createElement('div');
-        card.className = 'card';
         
-        // থাম্বনেইল লজিক: ডাটাবেসে ছবি থাকলে সেটা নিবে, না থাকলে ইউটিউব চেক করবে
-        let imageUrl = item.thumbnail_url || item.image_url; 
-        
-        // যদি ডাটাবেসে ছবি না থাকে (পুরানো লিংকের জন্য), তাহলে ম্যানুয়ালি চেক করবে
-        if (!imageUrl) {
-            imageUrl = getYouTubeThumbnail(item.url);
-        }
+        // 🔥 Check if this is a note (no URL)
+        const isNote = !item.url || item.url.trim() === "";
 
-        let imageHTML = '';
-
-        if (imageUrl) {
-            // ছবি পাওয়া গেলে
-            imageHTML = `<img src="${imageUrl}" class="thumb-img" alt="Thumbnail" onerror="this.style.display='none'">`;
+        if (isNote) {
+            // Note card design
+            const colorIndex = (feedContainer.children.length % 4) + 1;
+            card.className = `card note-card note-bg-${colorIndex}`;
+            card.innerHTML = `
+                <div class="note-body">
+                    <span class="material-icons note-badge">description</span>
+                    <div class="note-preview-text">${item.note || item.title}</div>
+                </div>
+                <div class="card-content" style="background: rgba(0,0,0,0.03)">
+                    <div class="card-title">${item.title}</div>
+                </div>
+            `;
         } else {
-            // ছবি না পাওয়া গেলে লোগো দেখাবে
-            const domain = new URL(item.url).hostname;
-            const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+            // Regular link/image card
+            card.className = 'card';
+        
+            // থাম্বনেইল লজিক: ডাটাবেসে ছবি থাকলে সেটা নিবে, না থাকলে ইউটিউব চেক করবে
+            let imageUrl = item.thumbnail_url || item.image_url; 
             
-            imageHTML = `
-                <div class="card-placeholder" style="background-color: ${getRandomColor()}">
-                    <img src="${favicon}" class="favicon-img" alt="Icon">
-                </div>`;
-        }
+            // যদি ডাটাবেসে ছবি না থাকে (পুরানো লিংকের জন্য), তাহলে ম্যানুয়ালি চেক করবে
+            if (!imageUrl) {
+                imageUrl = getYouTubeThumbnail(item.url);
+            }
 
-        card.innerHTML = `
-            <div class="card-header">
-                ${imageHTML}
-            </div>
-            <div class="card-content">
-                <div class="card-title">${item.title}</div>
-                <div class="card-link">${item.url}</div>
-            </div>
-        `;
+            let imageHTML = '';
+
+            if (imageUrl) {
+                // ছবি পাওয়া গেলে
+                imageHTML = `<img src="${imageUrl}" class="thumb-img" alt="Thumbnail" loading="lazy" onload="this.classList.add('loaded'); this.parentElement.classList.add('loaded');" onerror="this.style.display='none'">`;
+            } else {
+                // ছবি না পাওয়া গেলে লোগো দেখাবে
+                let favicon = "";
+                try {
+                    const domain = new URL(item.url).hostname;
+                    favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+                } catch (e) {
+                    favicon = "https://cdn-icons-png.flaticon.com/512/3062/3062634.png"; // Default icon
+                }
+                
+                setTimeout(() => {
+                    const header = card.querySelector('.card-header');
+                    if(header) header.classList.add('loaded');
+                }, 100);
+                
+                imageHTML = `
+                    <div class="card-placeholder" style="background-color: ${getRandomColor()}">
+                        <img src="${favicon}" class="favicon-img" alt="Icon">
+                    </div>`;
+            }
+
+            card.innerHTML = `
+                <div class="card-header">
+                    ${imageHTML}
+                </div>
+                <div class="card-content">
+                    <div class="card-title">${item.title}</div>
+                    <div class="card-link">${item.url}</div>
+                </div>
+            `;
+        }
         
         card.onclick = () => window.location.href = `../detail_screen/detail.html?id=${item.id}`;
         feedContainer.appendChild(card);
@@ -251,10 +281,14 @@ function renderFeed(dataList) {
 
 // --- Helper: ইউটিউব থাম্বনেইল বের করা ---
 function getYouTubeThumbnail(url) {
-    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/;
-    const ytMatch = url.match(youtubeRegex);
-    if (ytMatch && ytMatch[1]) {
-        return `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
+    try {
+        const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/;
+        const ytMatch = url.match(youtubeRegex);
+        if (ytMatch && ytMatch[1]) {
+            return `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
+        }
+    } catch(e) {
+        console.warn('Error parsing YouTube URL:', e);
     }
     return null;
 }
@@ -276,13 +310,28 @@ function closeModal() {
 }
 
 // --- 3. ডাটা সেভ করা (Multi-Upload সহ) ---
+function isValidHttpUrl(string) {
+    let url;
+    try {
+        url = new URL(string);
+    } catch (_) {
+        return false;  
+    }
+    return url.protocol === "http:" || url.protocol === "https:";
+}
+
 saveBtn.onclick = async () => {
-    const url = urlInput.value;
+    const url = urlInput.value.trim();
     let title = document.getElementById('input-title').value;
     const note = document.getElementById('input-note').value;
 
     if (!url && selectedFiles.length === 0) {
         alert("Please enter a URL or select Images!");
+        return;
+    }
+
+    if (url && !isValidHttpUrl(url)) {
+        alert("Invalid URL! Please enter a valid link (starting with http:// or https://)");
         return;
     }
 
