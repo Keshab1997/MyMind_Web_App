@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Mind Feed</title>
+    <link rel="stylesheet" href="home.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="manifest" href="../manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('../sw.js')
+                .then(() => console.log('Service Worker Registered'))
+                .catch(err => console.error('SW Error:', err));
+        }
+    </script>
+</head>
+<body>
+    <!-- Top Bar -->
+    <header>
+        <div class="search-bar">
+            <span class="material-icons">search</span>
+            <input type="text" id="search-input" placeholder="Search title, tags, notes...">
+        </div>
+        <button id="open-modal-btn" class="add-btn"><span class="material-icons">add</span></button>
+    </header>
+
+    <!-- Main Feed Area -->
+    <main id="feed-container">
+        <div class="loading">Loading...</div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="nav-item active"><span class="material-icons">dashboard</span><span>Everything</span></div>
+        <div class="nav-item"><span class="material-icons">circle</span><span>Spaces</span></div>
+        <div class="nav-item" onclick="window.location.href='../profile_screen/profile.html'">
+            <span class="material-icons">person</span><span>Profile</span>
+        </div>
+    </nav>
+
+    <!-- Add Link/Image Modal -->
+    <div id="add-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3>Save to Mind</h3>
+            
+            <!-- Multi-Image Preview -->
+            <div id="image-preview-container" style="display:none; margin-bottom:10px;">
+                <div id="preview-grid" class="preview-grid"></div>
+                <button id="clear-imgs-btn" class="clear-btn">Clear All</button>
+            </div>
+
+            <!-- Input Fields -->
+            <div class="input-group">
+                <input type="text" id="input-url" placeholder="Paste Link (YouTube, Insta...)">
+                <button id="upload-trigger-btn" class="icon-btn-small">
+                    <span class="material-icons">add_a_photo</span>
+                </button>
+                <input type="file" id="file-input" accept="image/*" multiple hidden>
+            </div>
+
+            <input type="text" id="input-title" placeholder="Title (Applied to all)">
+            <textarea id="input-note" placeholder="Add a note..."></textarea>
+            <div class="modal-actions">
+                <button id="cancel-btn">Cancel</button>
+                <button id="save-btn" class="primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="home.js"></script>
+</body>
+</html>

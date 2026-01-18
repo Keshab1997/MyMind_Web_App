@@ -1,0 +1,32 @@
+body { margin: 0; height: 100vh; background: linear-gradient(to bottom, #FFCDD2, #E1BEE7); font-family: 'Times New Roman', serif; }
+.profile-container { padding: 30px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
+.back-icon { cursor: pointer; margin-bottom: 20px; font-size: 24px; }
+.greeting { color: #4A148C; font-size: 2.5rem; margin-bottom: 40px; line-height: 1.1; }
+
+/* নাম হাইলাইট করার জন্য */
+#user-name {
+    text-transform: capitalize; /* প্রথম অক্ষর বড় হাতের হবে */
+}
+
+.info-section { margin-bottom: 20px; }
+.label { color: rgba(255,255,255,0.9); font-size: 12px; letter-spacing: 1.5px; font-family: sans-serif; margin-bottom: 5px; }
+.value { color: #4A148C; font-size: 18px; margin-top: 0; margin-bottom: 25px; font-family: sans-serif; }
+
+.action-buttons {
+    margin-top: auto; /* বাটনগুলো নিচে ঠেলে দিবে */
+}
+
+.btn { padding: 15px 20px; border-radius: 30px; margin-bottom: 15px; color: #4A148C; font-weight: bold; font-family: sans-serif; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: transform 0.2s; }
+
+.btn:active {
+    transform: scale(0.98);
+}
+.glass { background: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.5); }
+.gradient { background: linear-gradient(to right, #FFF3E0, #E1BEE7); border: none; }
+
+/* Logout Button Style */
+.logout {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid rgba(255, 0, 0, 0.3);
+    color: #b71c1c;
+}

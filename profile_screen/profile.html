@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <link rel="stylesheet" href="profile.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <div class="profile-container">
+        <span class="material-icons back-icon" onclick="history.back()">arrow_back</span>
+        
+        <h1 class="greeting">You have a<br>beautiful mind,<br><span id="user-name">Loading...</span></h1>
+        
+        <div class="info-section">
+            <p class="label">YOUR ACCOUNT</p>
+            <p class="value" id="user-email">loading...</p>
+            
+            <p class="label">YOUR PLAN</p>
+            <p class="value">Guest Plan</p>
+        </div>
+
+        <div class="action-buttons">
+            <div class="btn glass">
+                <span>How to get started</span>
+                <span class="material-icons">play_circle_outline</span>
+            </div>
+            <div class="btn gradient">
+                <span>Upgrade your mind</span>
+                <span class="material-icons">psychology</span>
+            </div>
+            <div class="btn logout" id="logout-btn">
+                <span>Log Out</span>
+                <span class="material-icons">logout</span>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="profile.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+body {
+    margin: 0;
+    height: 100vh;
+    background: linear-gradient(135deg, #F8BBD0, #E1BEE7, #FFCCBC);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Times New Roman', serif;
+}
+.center-content { text-align: center; color: white; animation: fadeIn 1s ease; }
+.logo-icon { font-size: 80px; margin-bottom: 10px; }
+.logo-text { font-size: 3rem; font-style: italic; line-height: 0.9; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
