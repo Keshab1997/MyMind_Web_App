@@ -9,7 +9,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  if (event.request.method === 'POST' && url.pathname.includes('/home_screen/home.html')) {
+  if (event.request.method === 'POST' && url.pathname.includes('home.html')) {
     event.respondWith(
       (async () => {
         const formData = await event.request.formData();
@@ -29,7 +29,7 @@ self.addEventListener('fetch', (event) => {
             await cache.put('shared-title', new Response(title));
         }
 
-        return Response.redirect('/home_screen/home.html?action=shared', 303);
+        return Response.redirect('./home_screen/home.html?action=shared', 303);
       })()
     );
   }
