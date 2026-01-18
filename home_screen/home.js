@@ -32,29 +32,34 @@ window.onload = async () => {
 };
 
 async function handleSharedContent() {
-    feedContainer.innerHTML = "<div class='loading'>Processing shared content...</div>";
-    
-    const cache = await caches.open('share-data');
-    const imgRes = await cache.match('shared-image');
-    const linkRes = await cache.match('shared-link');
-    const titleRes = await cache.match('shared-title');
+    try {
+        feedContainer.innerHTML = "<div class='loading'>Processing shared content...</div>";
+        
+        const cache = await caches.open('share-data');
+        const response = await cache.match('shared-data');
+        
+        if (response) {
+            const data = await response.json();
+            await cache.delete('shared-data');
 
-    let sharedFile = imgRes ? await imgRes.blob() : null;
-    let sharedLink = linkRes ? await linkRes.text() : null;
-    let sharedTitle = titleRes ? await titleRes.text() : "Shared Content";
+            let rawLink = data.link;
+            let sharedTitle = data.title;
 
-    console.log('Shared data:', { sharedFile, sharedLink, sharedTitle });
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            const foundLinks = rawLink.match(urlRegex);
+            const finalUrl = foundLinks ? foundLinks[0] : null;
 
-    await cache.delete('shared-image');
-    await cache.delete('shared-link');
-    await cache.delete('shared-title');
-
-    if (sharedFile) {
-        await uploadImageAndSave(sharedFile, sharedTitle);
-    } else if (sharedLink) {
-        await saveLinkAutomatic(sharedLink, sharedTitle);
-    } else {
-        console.error('No shared content found');
+            if (finalUrl) {
+                await saveLinkAutomatic(finalUrl, sharedTitle);
+            } else {
+                console.log('No valid URL found');
+                fetchLinks();
+            }
+        } else {
+            fetchLinks();
+        }
+    } catch (e) {
+        console.error('Share handling error:', e);
         fetchLinks();
     }
     
