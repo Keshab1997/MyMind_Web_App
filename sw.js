@@ -29,7 +29,7 @@ self.addEventListener('fetch', (event) => {
         if (text) await cache.put('shared-link', new Response(text));
         if (title) await cache.put('shared-title', new Response(title));
 
-        return Response.redirect('./home.html?action=shared', 303);
+        return Response.redirect('home_screen/home.html?action=shared', 303);
       })()
     );
   }

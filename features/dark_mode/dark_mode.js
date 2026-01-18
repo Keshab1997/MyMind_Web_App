@@ -1,18 +1,25 @@
-const toggleBtn = document.createElement('button');
-toggleBtn.id = 'dark-mode-toggle';
-toggleBtn.innerHTML = '<span class="material-icons">dark_mode</span>';
-document.body.appendChild(toggleBtn);
+const toggleBtn = document.getElementById('dark-mode-toggle');
+const body = document.body;
 
 if (localStorage.getItem('theme') === 'dark') {
-    document.body.classList.add('dark-mode');
+    body.classList.add('dark-mode');
+    updateIcon(true);
 }
 
 toggleBtn.onclick = () => {
-    document.body.classList.toggle('dark-mode');
-    
-    if (document.body.classList.contains('dark-mode')) {
-        localStorage.setItem('theme', 'dark');
-    } else {
-        localStorage.setItem('theme', 'light');
-    }
+    body.classList.toggle('dark-mode');
+    const isDark = body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    updateIcon(isDark);
 };
+
+function updateIcon(isDark) {
+    const icon = toggleBtn.querySelector('.material-icons');
+    if (isDark) {
+        icon.innerText = 'light_mode';
+        toggleBtn.style.color = '#FFD700';
+    } else {
+        icon.innerText = 'dark_mode';
+        toggleBtn.style.color = '';
+    }
+}

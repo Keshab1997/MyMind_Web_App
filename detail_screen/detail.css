@@ -274,3 +274,36 @@ header {
 .bg-note {
     background: linear-gradient(135deg, #FFF9C4, #FFF176) !important;
 }
+
+/* =============================================
+   DESKTOP DESIGN (Media Query)
+   ============================================= */
+@media (min-width: 1024px) {
+    header {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .content-area {
+        display: grid;
+        grid-template-columns: 450px 1fr;
+        gap: 40px;
+        max-width: 1100px;
+        margin: 0 auto;
+        align-items: start;
+        padding-top: 20px;
+    }
+
+    .hero-card {
+        position: sticky;
+        top: 20px;
+        margin-bottom: 0;
+        height: 600px;
+    }
+
+    .bottom-bar {
+        width: 500px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}

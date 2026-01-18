@@ -9,7 +9,8 @@ body.dark-mode .modal-box,
 body.dark-mode .card,
 body.dark-mode .description-box,
 body.dark-mode .note-box,
-body.dark-mode .info-card {
+body.dark-mode .info-card,
+body.dark-mode .search-bar {
     background-color: #1E1E1E !important;
     color: #ffffff !important;
     border-color: #333 !important;
@@ -32,17 +33,6 @@ body.dark-mode .card-link {
     color: #aaa !important;
 }
 
-#dark-mode-toggle {
-    position: fixed;
-    top: 15px;
-    right: 70px;
-    z-index: 100;
-    background: none;
-    border: none;
-    color: #555;
-    cursor: pointer;
-    font-size: 24px;
-}
-body.dark-mode #dark-mode-toggle {
-    color: #FFD700;
+body.dark-mode .header-icon-btn {
+    color: #FFD700 !important;
 }
