@@ -32,6 +32,8 @@ window.onload = async () => {
 };
 
 async function handleSharedContent() {
+    feedContainer.innerHTML = "<div class='loading'>Processing shared content...</div>";
+    
     const cache = await caches.open('share-data');
     const imgRes = await cache.match('shared-image');
     const linkRes = await cache.match('shared-link');
@@ -41,6 +43,8 @@ async function handleSharedContent() {
     let sharedLink = linkRes ? await linkRes.text() : null;
     let sharedTitle = titleRes ? await titleRes.text() : "Shared Content";
 
+    console.log('Shared data:', { sharedFile, sharedLink, sharedTitle });
+
     await cache.delete('shared-image');
     await cache.delete('shared-link');
     await cache.delete('shared-title');
@@ -49,6 +53,9 @@ async function handleSharedContent() {
         await uploadImageAndSave(sharedFile, sharedTitle);
     } else if (sharedLink) {
         await saveLinkAutomatic(sharedLink, sharedTitle);
+    } else {
+        console.error('No shared content found');
+        fetchLinks();
     }
     
     window.history.replaceState({}, document.title, window.location.pathname);
