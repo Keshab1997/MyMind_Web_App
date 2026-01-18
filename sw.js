@@ -1,9 +1,11 @@
+const CACHE_NAME = 'share-target-cache';
+
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+    self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  self.clients.claim();
+    event.waitUntil(clients.claim());
 });
 
 self.addEventListener('fetch', (event) => {
@@ -14,22 +16,20 @@ self.addEventListener('fetch', (event) => {
       (async () => {
         const formData = await event.request.formData();
         const image = formData.get('image');
-        const link = formData.get('text') || formData.get('url');
+        const text = formData.get('text') || formData.get('url');
         const title = formData.get('title');
 
         const cache = await caches.open('share-data');
         
-        if (image) {
-          await cache.put('shared-image', new Response(image));
-        }
-        if (link) {
-          await cache.put('shared-link', new Response(link));
-        }
-        if (title) {
-            await cache.put('shared-title', new Response(title));
-        }
+        await cache.delete('shared-image');
+        await cache.delete('shared-link');
+        await cache.delete('shared-title');
 
-        return Response.redirect('./home_screen/home.html?action=shared', 303);
+        if (image) await cache.put('shared-image', new Response(image));
+        if (text) await cache.put('shared-link', new Response(text));
+        if (title) await cache.put('shared-title', new Response(title));
+
+        return Response.redirect('./home.html?action=shared', 303);
       })()
     );
   }

@@ -32,8 +32,6 @@ window.onload = async () => {
 };
 
 async function handleSharedContent() {
-    showNotification("My Mind", "Processing shared content...");
-    
     const cache = await caches.open('share-data');
     const imgRes = await cache.match('shared-image');
     const linkRes = await cache.match('shared-link');
@@ -57,7 +55,7 @@ async function handleSharedContent() {
 }
 
 async function uploadImageAndSave(file, title) {
-    showNotification("My Mind", "Uploading image...");
+    feedContainer.innerHTML = "<div class='loading'>Uploading image...</div>";
     try {
         const formData = new FormData();
         formData.append("image", file);
@@ -75,19 +73,21 @@ async function uploadImageAndSave(file, title) {
                 tags: "Shared, Gallery"
             });
             if (!error) {
-                showNotification("Success", "Image saved to My Mind!");
-                fetchLinks();
+                window.location.href = "../features/success_splash/index.html";
             }
         }
     } catch (e) {
-        showNotification("Error", "Upload failed.");
+        alert("Upload failed");
+        fetchLinks();
     }
 }
 
 async function saveLinkAutomatic(url, title) {
-    showNotification("My Mind", "Saving link...");
+    feedContainer.innerHTML = "<div class='loading'>Saving link...</div>";
     let finalImage = getYouTubeThumbnail(url);
     let finalTitle = title;
+    let finalDesc = "";
+    
     if (!finalImage) {
         try {
             const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(url)}`);
@@ -95,17 +95,23 @@ async function saveLinkAutomatic(url, title) {
             if (meta.status === 'success') {
                 if (meta.data.image) finalImage = meta.data.image.url;
                 if (!finalTitle && meta.data.title) finalTitle = meta.data.title;
+                if (meta.data.description) finalDesc = meta.data.description;
             }
         } catch (e) {}
     }
+    
     const { error } = await supabase.from('mind_links').insert({
         url: url,
         title: finalTitle || "Shared Link",
         image_url: finalImage,
+        description: finalDesc,
         tags: "Shared, Link"
     });
+    
     if (!error) {
-        showNotification("Success", "Link saved successfully!");
+        window.location.href = "../features/success_splash/index.html";
+    } else {
+        alert("Save failed");
         fetchLinks();
     }
 }
