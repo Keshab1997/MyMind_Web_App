@@ -1,5 +1,13 @@
 import { supabase } from "../../supabase_config.js";
 
+// Context menu block করা
+document.addEventListener('contextmenu', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        return;
+    }
+    e.preventDefault();
+}, false);
+
 const IMGBB_API_KEY = "3f28730505fe4abf28c082d23f395a1b"; 
 
 const noteArea = document.getElementById('note-area');

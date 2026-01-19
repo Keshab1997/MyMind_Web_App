@@ -39,6 +39,14 @@ function showLoader(message) {
 
 // পেজ লোড হলে ডাটা আনবে
 window.onload = async () => {
+    // Context menu block করা
+    document.addEventListener('contextmenu', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+        e.preventDefault();
+    }, false);
+
     if (Notification.permission !== "granted") {
         Notification.requestPermission();
     }

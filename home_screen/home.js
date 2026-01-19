@@ -10,6 +10,7 @@ const selectedCountEl = document.getElementById('selected-count');
 const multiSelectBtn = document.getElementById('multi-select-btn');
 const cancelSelection = document.getElementById('cancel-selection');
 const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+const offlineIndicator = document.getElementById('offline-indicator');
 
 const fileInput = document.getElementById('file-input');
 const uploadTrigger = document.getElementById('upload-trigger-btn');
@@ -26,6 +27,18 @@ let isSelectMode = false;
 
 // পেজ লোড হলে ডাটা আনবে
 window.onload = async () => {
+    // Context menu block করা
+    document.addEventListener('contextmenu', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+        e.preventDefault();
+    }, false);
+
+    updateOnlineStatus();
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
     if (Notification.permission !== "granted") {
         Notification.requestPermission();
     }
@@ -37,6 +50,14 @@ window.onload = async () => {
 
     fetchLinks();
 };
+
+function updateOnlineStatus() {
+    if (navigator.onLine) {
+        offlineIndicator.style.display = 'none';
+    } else {
+        offlineIndicator.style.display = 'block';
+    }
+}
 
 async function handleSharedContent() {
     try {
@@ -186,7 +207,15 @@ clearImgsBtn.onclick = () => {
 
 // 1. ডাটা লোড করা
 async function fetchLinks() {
-    feedContainer.innerHTML = "<div class='loading'>Loading...</div>";
+    const cachedData = localStorage.getItem('mind_links_cache');
+    if (cachedData) {
+        allLinksData = JSON.parse(cachedData);
+        renderFeed(allLinksData);
+    } else {
+        feedContainer.innerHTML = "<div class='loading'>Loading...</div>";
+    }
+
+    if (!navigator.onLine) return;
 
     const { data, error } = await supabase
         .from('mind_links')
@@ -195,11 +224,12 @@ async function fetchLinks() {
 
     if (error) {
         console.error("Error fetching:", error);
-        feedContainer.innerHTML = "<p>Error loading data.</p>";
+        if (!cachedData) feedContainer.innerHTML = "<p>Error loading data.</p>";
         return;
     }
 
     allLinksData = data;
+    localStorage.setItem('mind_links_cache', JSON.stringify(data));
     renderFeed(allLinksData);
 }
 
@@ -304,7 +334,11 @@ function renderFeed(dataList) {
             if (isSelectMode) {
                 toggleSelection(item.id, card);
             } else {
-                window.location.href = `../detail_screen/detail.html?id=${item.id}`;
+                if (navigator.onLine) {
+                    window.location.href = `../detail_screen/detail.html?id=${item.id}`;
+                } else {
+                    alert("Detail view is only available online.");
+                }
             }
         };
 

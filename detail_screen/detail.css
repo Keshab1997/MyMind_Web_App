@@ -1,3 +1,29 @@
+/* --- Native App Feel Fix --- */
+* {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+input, textarea, [contenteditable="true"], .note-input {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    -webkit-touch-callout: default !important;
+}
+
+img {
+    -webkit-user-drag: none;
+    pointer-events: none;
+}
+
+button, .icon-btn, .bottom-btn {
+    cursor: pointer;
+}
+
 :root {
     --bg-color: #F8FAFC;
     --card-bg: #ffffff;

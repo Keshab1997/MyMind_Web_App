@@ -1,3 +1,29 @@
+/* --- Native App Feel Fix --- */
+* {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+input, textarea, [contenteditable="true"], #search-input {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    -webkit-touch-callout: default !important;
+}
+
+img {
+    -webkit-user-drag: none;
+    pointer-events: none;
+}
+
+.card, .nav-item, button {
+    cursor: pointer;
+}
+
 body { background-color: #FDF2F8; margin: 0; font-family: sans-serif; padding-bottom: 70px; }
 header { padding: 15px; display: flex; gap: 15px; align-items: center; position: sticky; top: 0; background: #FDF2F8; z-index: 10; }
 .search-bar { flex: 1; background: white; padding: 10px 15px; border-radius: 30px; display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
