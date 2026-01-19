@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      width: 320px;
+      padding: 16px;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #FDF2F8;
+      margin: 0;
+    }
+    h3 { 
+      color: #4A148C; 
+      margin: 0 0 16px 0; 
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+    }
+    .input-group { margin-bottom: 12px; }
+    label { 
+      display: block; 
+      font-size: 12px; 
+      color: #666; 
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: orange;
+    }
+    textarea { 
+      height: 70px; 
+      resize: none; 
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: orange;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: 0.2s;
+    }
+    button:hover { background: #e69500; }
+    button:disabled { 
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    #status {
+      margin-top: 12px;
+      font-size: 12px;
+      text-align: center;
+      padding: 8px;
+      border-radius: 6px;
+    }
+    .success { 
+      color: #2e7d32; 
+      background: #e8f5e9;
+    }
+    .error { 
+      color: #c62828; 
+      background: #ffebee;
+    }
+  </style>
+</head>
+<body>
+  <h3>
+    <img src="icon.png" class="logo" alt="My Mind">
+    Save to My Mind
+  </h3>
+  
+  <div class="input-group">
+    <label>Link (URL)</label>
+    <input type="text" id="url" placeholder="https://...">
+  </div>
+
+  <div class="input-group">
+    <label>Title</label>
+    <input type="text" id="title" placeholder="Page Title">
+  </div>
+
+  <div class="input-group">
+    <label>Note (Optional)</label>
+    <textarea id="note" placeholder="Add a quick note..."></textarea>
+  </div>
+
+  <button id="save-btn">Save to My Mind</button>
+  <div id="status"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "My Mind Saver",
+  "version": "1.0",
+  "description": "Save links directly to your My Mind feed.",
+  "permissions": ["activeTab", "storage"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "128": "icon.png"
+    }
+  },
+  "icons": {
+    "128": "icon.png"
+  }
+}
