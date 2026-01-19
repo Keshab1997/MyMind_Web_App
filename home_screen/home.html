@@ -24,11 +24,28 @@
             <span class="material-icons">search</span>
             <input type="text" id="search-input" placeholder="Search title, tags, notes...">
         </div>
+        <button id="multi-select-btn" class="header-icon-btn">
+            <span class="material-icons">rule</span>
+        </button>
         <button id="dark-mode-toggle" class="header-icon-btn">
             <span class="material-icons">dark_mode</span>
         </button>
         <button id="open-modal-btn" class="add-btn"><span class="material-icons">add</span></button>
     </header>
+
+    <!-- Multi-Delete Action Bar -->
+    <div id="multi-delete-bar" class="multi-action-bar">
+        <div class="selection-info">
+            <span class="material-icons" id="cancel-selection" style="cursor:pointer">close</span>
+            <span id="selected-count">0 selected</span>
+        </div>
+        <div class="action-btns">
+            <button id="delete-selected-btn" class="delete-fab">
+                <span class="material-icons">delete</span>
+                <span>Delete</span>
+            </button>
+        </div>
+    </div>
 
     <!-- Main Feed Area -->
     <main id="feed-container">

@@ -5,6 +5,11 @@ const IMGBB_API_KEY = "3f28730505fe4abf28c082d23f395a1b";
 const feedContainer = document.getElementById('feed-container');
 const modal = document.getElementById('add-modal');
 const saveBtn = document.getElementById('save-btn');
+const multiDeleteBar = document.getElementById('multi-delete-bar');
+const selectedCountEl = document.getElementById('selected-count');
+const multiSelectBtn = document.getElementById('multi-select-btn');
+const cancelSelection = document.getElementById('cancel-selection');
+const deleteSelectedBtn = document.getElementById('delete-selected-btn');
 
 const fileInput = document.getElementById('file-input');
 const uploadTrigger = document.getElementById('upload-trigger-btn');
@@ -16,6 +21,8 @@ const searchInput = document.getElementById('search-input');
 
 let selectedFiles = [];
 let allLinksData = [];
+let selectedIds = [];
+let isSelectMode = false;
 
 // পেজ লোড হলে ডাটা আনবে
 window.onload = async () => {
@@ -292,10 +299,85 @@ function renderFeed(dataList) {
             `;
         }
         
-        card.onclick = () => window.location.href = `../detail_screen/detail.html?id=${item.id}`;
+        // Click & Long Press Logic
+        card.onclick = () => {
+            if (isSelectMode) {
+                toggleSelection(item.id, card);
+            } else {
+                window.location.href = `../detail_screen/detail.html?id=${item.id}`;
+            }
+        };
+
+        let pressTimer;
+        card.onmousedown = card.ontouchstart = () => {
+            pressTimer = window.setTimeout(() => {
+                if (!isSelectMode) startSelectionMode(item.id, card);
+            }, 600);
+        };
+        card.onmouseup = card.onmouseleave = card.ontouchend = () => clearTimeout(pressTimer);
+        
         feedContainer.appendChild(card);
     });
 }
+
+// Selection Mode Functions
+function startSelectionMode(firstId, firstCard) {
+    isSelectMode = true;
+    multiDeleteBar.style.display = 'flex';
+    if (firstId && firstCard) toggleSelection(firstId, firstCard);
+}
+
+function toggleSelection(id, cardElement) {
+    if (selectedIds.includes(id)) {
+        selectedIds = selectedIds.filter(i => i !== id);
+        cardElement.classList.remove('selected');
+    } else {
+        selectedIds.push(id);
+        cardElement.classList.add('selected');
+    }
+    
+    selectedCountEl.innerText = `${selectedIds.length} selected`;
+    if (selectedIds.length === 0) exitSelectionMode();
+}
+
+function exitSelectionMode() {
+    isSelectMode = false;
+    selectedIds = [];
+    multiDeleteBar.style.display = 'none';
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+}
+
+multiSelectBtn.onclick = () => {
+    if (isSelectMode) exitSelectionMode();
+    else startSelectionMode(null, null);
+};
+
+cancelSelection.onclick = exitSelectionMode;
+
+deleteSelectedBtn.onclick = async () => {
+    if (selectedIds.length === 0) return;
+    
+    const confirmDelete = confirm(`Delete ${selectedIds.length} items permanently?`);
+    if (!confirmDelete) return;
+
+    deleteSelectedBtn.disabled = true;
+    deleteSelectedBtn.innerHTML = '<span class="material-icons">hourglass_empty</span><span>Deleting...</span>';
+
+    const { error } = await supabase
+        .from('mind_links')
+        .delete()
+        .in('id', selectedIds);
+
+    if (!error) {
+        exitSelectionMode();
+        fetchLinks();
+    } else {
+        alert("Error deleting items");
+    }
+    
+    deleteSelectedBtn.disabled = false;
+    deleteSelectedBtn.innerHTML = '<span class="material-icons">delete</span><span>Delete</span>';
+};
 
 // --- Helper: ইউটিউব থাম্বনেইল বের করা ---
 function getYouTubeThumbnail(url) {

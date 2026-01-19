@@ -67,11 +67,21 @@ async function loadDetail() {
             } else if (data.image_url) {
                 heroContainer.innerHTML = `
                     <img src="${data.image_url}" class="hero-img">
-                    <div class="play-overlay" onclick="window.open('${data.url}', '_blank')">
-                        <span class="material-icons" style="font-size: 30px; color: white;">play_arrow</span>
+                    <div class="play-overlay" id="main-play-btn">
+                        <span class="material-icons" style="font-size: 40px; color: white;">play_arrow</span>
                     </div>
                     ${titleOverlay}
                 `;
+                
+                setTimeout(() => {
+                    const playBtn = document.getElementById('main-play-btn');
+                    if(playBtn) {
+                        playBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            window.open(data.url, '_blank');
+                        };
+                    }
+                }, 100);
             } else {
                 heroContainer.innerHTML = `
                     <div style="width:100%; height:100%; background:#333; display:flex; justify-content:center; align-items:center;">
