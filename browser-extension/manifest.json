@@ -1,9 +1,13 @@
 {
   "manifest_version": 3,
   "name": "My Mind Saver",
-  "version": "1.0",
-  "description": "Save links directly to your My Mind feed.",
+  "version": "1.3",
+  "description": "Save links directly to your My Mind feed with Auth.",
   "permissions": ["activeTab", "storage"],
+  "host_permissions": [
+    "https://cmrgloxlyovihqhdxdls.supabase.co/*",
+    "https://api.microlink.io/*"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

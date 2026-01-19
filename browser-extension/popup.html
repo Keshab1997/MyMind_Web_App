@@ -2,107 +2,64 @@
 <html>
 <head>
   <style>
-    body {
-      width: 320px;
-      padding: 16px;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #FDF2F8;
-      margin: 0;
-    }
-    h3 { 
-      color: #4A148C; 
-      margin: 0 0 16px 0; 
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .logo {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-    }
-    .input-group { margin-bottom: 12px; }
-    label { 
-      display: block; 
-      font-size: 12px; 
-      color: #666; 
-      margin-bottom: 4px;
-      font-weight: 500;
-    }
-    input, textarea {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      box-sizing: border-box;
-      font-size: 13px;
-      font-family: inherit;
-    }
-    input:focus, textarea:focus {
-      outline: none;
-      border-color: orange;
-    }
-    textarea { 
-      height: 70px; 
-      resize: none; 
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      background: orange;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 14px;
-      transition: 0.2s;
-    }
-    button:hover { background: #e69500; }
-    button:disabled { 
-      background: #ccc;
-      cursor: not-allowed;
-    }
-    #status {
-      margin-top: 12px;
-      font-size: 12px;
-      text-align: center;
-      padding: 8px;
-      border-radius: 6px;
-    }
-    .success { 
-      color: #2e7d32; 
-      background: #e8f5e9;
-    }
-    .error { 
-      color: #c62828; 
-      background: #ffebee;
-    }
+    body { width: 320px; padding: 16px; font-family: 'Segoe UI', system-ui, sans-serif; background: #FDF2F8; margin: 0; }
+    .container { display: flex; flex-direction: column; gap: 12px; }
+    h3 { color: #4A148C; margin: 0 0 12px 0; font-size: 18px; display: flex; align-items: center; justify-content: space-between; }
+    .user-info { font-size: 11px; color: #555; background: #fff; padding: 6px 12px; border-radius: 20px; margin-bottom: 8px; }
+    label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; font-weight: 500; }
+    input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 13px; font-family: inherit; }
+    input:focus, textarea:focus { outline: none; border-color: orange; }
+    textarea { height: 70px; resize: none; }
+    button { width: 100%; padding: 11px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; }
+    .primary-btn { background: orange; color: white; }
+    .primary-btn:hover { background: #e69500; }
+    .primary-btn:disabled { background: #ccc; cursor: not-allowed; }
+    .logout-btn { background: transparent; color: #E53935; font-size: 11px; width: auto; padding: 4px 8px; text-decoration: underline; }
+    #status { font-size: 12px; text-align: center; margin-top: 8px; padding: 6px; border-radius: 6px; }
+    .hidden { display: none; }
+    .input-group { margin-bottom: 10px; }
   </style>
 </head>
 <body>
-  <h3>
-    <img src="icon.png" class="logo" alt="My Mind">
-    Save to My Mind
-  </h3>
-  
-  <div class="input-group">
-    <label>Link (URL)</label>
-    <input type="text" id="url" placeholder="https://...">
+
+  <!-- Login View -->
+  <div id="login-view" class="container hidden">
+    <h3>Login to My Mind</h3>
+    <div class="input-group">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="your@email.com">
+    </div>
+    <div class="input-group">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="Password">
+    </div>
+    <button id="do-login-btn" class="primary-btn">Log In</button>
+    <p style="font-size: 11px; color: #888; text-align: center; margin: 8px 0 0 0;">Use your My Mind web app credentials</p>
   </div>
 
-  <div class="input-group">
-    <label>Title</label>
-    <input type="text" id="title" placeholder="Page Title">
+  <!-- Save View -->
+  <div id="save-view" class="container hidden">
+    <h3>
+      Save to Mind
+      <button id="do-logout-btn" class="logout-btn">Logout</button>
+    </h3>
+    <div id="logged-in-as" class="user-info"></div>
+    
+    <div class="input-group">
+      <label>Link (URL)</label>
+      <input type="text" id="url" placeholder="https://...">
+    </div>
+    <div class="input-group">
+      <label>Title</label>
+      <input type="text" id="title" placeholder="Page Title">
+    </div>
+    <div class="input-group">
+      <label>Note (Optional)</label>
+      <textarea id="note" placeholder="Add a quick note..."></textarea>
+    </div>
+    <button id="save-btn" class="primary-btn">Save to My Mind</button>
   </div>
 
-  <div class="input-group">
-    <label>Note (Optional)</label>
-    <textarea id="note" placeholder="Add a quick note..."></textarea>
-  </div>
-
-  <button id="save-btn">Save to My Mind</button>
   <div id="status"></div>
 
   <script src="popup.js"></script>
