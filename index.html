@@ -3,43 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Mind - Login</title>
+    <title>My Mind Feed</title>
     <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./features/dark_mode/dark_mode.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- PWA Manifest -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#FDF2F8">
 </head>
 <body>
-    <div class="login-container">
-        <div class="logo-area">
-            <span class="material-icons logo-icon">psychology</span>
-            <h1>my<br>mind</h1>
+    <header>
+        <div class="search-bar">
+            <span class="material-icons">search</span>
+            <input type="text" id="search-input" placeholder="Search title, tags, notes...">
         </div>
+        <button id="dark-mode-toggle" class="header-icon-btn">
+            <span class="material-icons">dark_mode</span>
+        </button>
+        <button id="open-modal-btn" class="add-btn"><span class="material-icons">add</span></button>
+    </header>
 
-        <div class="form-area">
-            <h2>Welcome Back</h2>
-            <p>Please login to continue</p>
+    <main id="feed-container">
+        <div class="loading">Loading your mind...</div>
+    </main>
 
-            <input type="email" id="email" placeholder="Email Address">
-            <input type="password" id="password" placeholder="Password">
+    <nav class="bottom-nav">
+        <div class="nav-item active"><span class="material-icons">dashboard</span><span>Everything</span></div>
+        <div class="nav-item" onclick="window.location.href='./features/quick_note/index.html'"><span class="material-icons">edit_note</span><span>Note</span></div>
+        <div class="nav-item"><span class="material-icons">circle</span><span>Spaces</span></div>
+        <div class="nav-item" onclick="window.location.href='./profile_screen/profile.html'"><span class="material-icons">person</span><span>Profile</span></div>
+    </nav>
 
-            <button id="login-btn" class="primary-btn">Log In</button>
-            <button id="signup-btn" class="secondary-btn">Create Account</button>
-
-            <p id="status-msg"></p>
+    <div id="add-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3>Save to Mind</h3>
+            <div id="image-preview-container" style="display:none; margin-bottom:10px;">
+                <div id="preview-grid" class="preview-grid"></div>
+                <button id="clear-imgs-btn" class="clear-btn">Clear All</button>
+            </div>
+            <div class="input-group">
+                <input type="text" id="input-url" placeholder="Paste Link (YouTube, Insta...)">
+                <button id="upload-trigger-btn" class="icon-btn-small"><span class="material-icons">add_a_photo</span></button>
+                <input type="file" id="file-input" accept="image/*" multiple hidden>
+            </div>
+            <input type="text" id="input-title" placeholder="Title">
+            <textarea id="input-note" placeholder="Add a note..."></textarea>
+            <div class="modal-actions">
+                <button id="cancel-btn">Cancel</button>
+                <button id="save-btn" class="primary">Save</button>
+            </div>
         </div>
     </div>
 
     <script type="module" src="./script.js"></script>
+    <script defer src="./features/dark_mode/dark_mode.js"></script>
     <script>
-        // Service Worker Registration for PWA
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('SW Registered'))
-                    .catch(err => console.log('SW Error:', err));
-            });
+            navigator.serviceWorker.register('./sw.js');
         }
     </script>
 </body>

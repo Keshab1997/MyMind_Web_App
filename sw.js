@@ -9,7 +9,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
-    if (event.request.method === 'POST' && url.pathname.includes('/home.html')) {
+    if (event.request.method === 'POST' && (url.pathname === '/' || url.pathname.includes('index.html'))) {
         event.respondWith(
             (async () => {
                 try {
@@ -25,10 +25,10 @@ self.addEventListener('fetch', (event) => {
                         title: sharedTitle
                     })));
 
-                    return Response.redirect('/home_screen/home.html?action=shared', 303);
+                    return Response.redirect('./index.html?action=shared', 303);
                 } catch (error) {
                     console.error('SW error:', error);
-                    return Response.redirect('/home_screen/home.html', 303);
+                    return Response.redirect('./index.html', 303);
                 }
             })()
         );
