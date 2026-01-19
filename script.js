@@ -26,6 +26,17 @@ const searchInput = document.getElementById('search-input');
 let selectedFiles = [];
 let allLinksData = [];
 
+// সুন্দর লোডার দেখানোর ফাংশন
+function showLoader(message) {
+    if (!feedContainer) return;
+    feedContainer.innerHTML = `
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <div class="loading-text">${message}</div>
+        </div>
+    `;
+}
+
 // পেজ লোড হলে ডাটা আনবে
 window.onload = async () => {
     if (Notification.permission !== "granted") {
@@ -42,7 +53,7 @@ window.onload = async () => {
 
 async function handleSharedContent() {
     try {
-        feedContainer.innerHTML = "<div class='loading'>Processing shared content...</div>";
+        showLoader("Processing shared content");
         
         const cache = await caches.open('share-data');
         const dataRes = await cache.match('shared-data');
@@ -82,7 +93,7 @@ async function handleSharedContent() {
 }
 
 async function uploadImageAndSave(file, title) {
-    feedContainer.innerHTML = "<div class='loading'>Uploading shared image...</div>";
+    showLoader("Uploading shared image");
     try {
         const formData = new FormData();
         formData.append("image", file);
@@ -111,7 +122,7 @@ async function uploadImageAndSave(file, title) {
 }
 
 async function saveLinkAutomatic(url, title) {
-    feedContainer.innerHTML = "<div class='loading'>Saving link...</div>";
+    showLoader("Saving link to your mind");
     let finalImage = getYouTubeThumbnail(url);
     let finalTitle = title;
     let finalDesc = "";
@@ -195,7 +206,7 @@ clearImgsBtn.onclick = () => {
 
 // 1. ডাটা লোড করা
 async function fetchLinks() {
-    feedContainer.innerHTML = "<div class='loading'>Loading...</div>";
+    showLoader("Loading your mind");
 
     const { data, error } = await supabase
         .from('mind_links')
