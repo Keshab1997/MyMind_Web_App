@@ -50,8 +50,8 @@ signupBtn.onclick = async () => {
     if (error) {
         statusMsg.innerText = error.message;
     } else {
-        statusMsg.style.color = "green";
-        statusMsg.innerText = "Account created! You can now Log In.";
+        statusMsg.style.color = "#1976D2";
+        statusMsg.innerText = "✓ Account created! Please check your email to verify your account.";
     }
     signupBtn.innerText = "Create Account";
 };
