@@ -3,39 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile</title>
+    <title>My Profile</title>
     <link rel="stylesheet" href="profile.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="profile-container">
-        <span class="material-icons back-icon" onclick="history.back()">arrow_back</span>
-        
-        <h1 class="greeting">You have a<br>beautiful mind,<br><span id="user-name">Loading...</span></h1>
-        
-        <div class="info-section">
-            <p class="label">YOUR ACCOUNT</p>
-            <p class="value" id="user-email">loading...</p>
-            
-            <p class="label">YOUR PLAN</p>
-            <p class="value">Guest Plan</p>
-        </div>
+    <div class="profile-wrapper">
+        <header class="profile-header">
+            <span class="material-icons back-btn" onclick="history.back()">arrow_back</span>
+            <h2>Account Settings</h2>
+            <span class="material-icons logout-icon" id="logout-btn">logout</span>
+        </header>
 
-        <div class="action-buttons">
-            <div class="btn glass">
-                <span>How to get started</span>
-                <span class="material-icons">play_circle_outline</span>
+        <main class="profile-card">
+            <!-- Profile Photo Section -->
+            <div class="avatar-section">
+                <div class="avatar-container">
+                    <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" id="profile-img" alt="Avatar">
+                    <label for="photo-upload" class="edit-photo-btn">
+                        <span class="material-icons">photo_camera</span>
+                    </label>
+                    <input type="file" id="photo-upload" accept="image/*" hidden>
+                </div>
+                <h3 id="display-name-top">User Name</h3>
+                <p id="display-email-top">user@example.com</p>
             </div>
-            <div class="btn gradient">
-                <span>Upgrade your mind</span>
-                <span class="material-icons">psychology</span>
+
+            <!-- Edit Info Section -->
+            <div class="form-section">
+                <div class="input-group">
+                    <label>Display Name</label>
+                    <div class="input-wrapper">
+                        <span class="material-icons">person_outline</span>
+                        <input type="text" id="edit-name" placeholder="Enter your name">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <div class="input-wrapper disabled">
+                        <span class="material-icons">mail_outline</span>
+                        <input type="email" id="edit-email" disabled>
+                    </div>
+                </div>
+
+                <hr class="divider">
+
+                <div class="input-group">
+                    <label>New Password</label>
+                    <div class="input-wrapper">
+                        <span class="material-icons">lock_open</span>
+                        <input type="password" id="new-password" placeholder="Leave blank to keep current">
+                        <span class="material-icons toggle-password" id="toggle-pass-icon">visibility</span>
+                    </div>
+                </div>
+
+                <button id="save-profile-btn" class="save-btn">
+                    <span class="material-icons">check_circle</span>
+                    Save Changes
+                </button>
             </div>
-            <div class="btn logout" id="logout-btn">
-                <span>Log Out</span>
-                <span class="material-icons">logout</span>
-            </div>
-        </div>
+        </main>
+        
+        <p id="status-msg"></p>
     </div>
+
     <script type="module" src="profile.js"></script>
 </body>
 </html>

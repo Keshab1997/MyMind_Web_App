@@ -6,25 +6,56 @@
     <title>My Mind - Login</title>
     <link rel="stylesheet" href="./login_style.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="login-container">
-        <div class="logo-area">
-            <span class="material-icons logo-icon">psychology</span>
-            <h1>my<br>mind</h1>
+    <div class="login-wrapper">
+        <!-- Developer Profile Section -->
+        <div class="dev-section">
+            <div class="dev-card">
+                <img src="https://i.ibb.co/n8R6LxmY/Picsart-25-12-14-18-09-18-348.jpg" alt="Keshab Sarkar" class="dev-img">
+                <div class="dev-info">
+                    <h3>Keshab Sarkar</h3>
+                    <p>Developer</p>
+                </div>
+            </div>
         </div>
 
-        <div class="form-area">
-            <h2>Welcome Back</h2>
-            <p>Please login to continue</p>
+        <!-- Login Form Section -->
+        <div class="login-container">
+            <div class="logo-area">
+                <span class="material-icons logo-icon">psychology</span>
+                <h1>my<br>mind</h1>
+            </div>
 
-            <input type="email" id="email" placeholder="Email Address">
-            <input type="password" id="password" placeholder="Password">
+            <div class="form-area">
+                <h2>Welcome Back</h2>
+                <p>Please login to continue</p>
 
-            <button id="login-btn" class="primary-btn">Log In</button>
-            <button id="signup-btn" class="secondary-btn">Create Account</button>
+                <div class="input-group">
+                    <span class="material-icons input-icon">email</span>
+                    <input type="email" id="email" placeholder="Email Address">
+                </div>
 
-            <p id="status-msg"></p>
+                <div class="input-group">
+                    <span class="material-icons input-icon">lock</span>
+                    <input type="password" id="password" placeholder="Password">
+                    <span class="material-icons toggle-password" id="toggle-password">visibility</span>
+                </div>
+
+                <button id="login-btn" class="primary-btn">Log In</button>
+                <button id="signup-btn" class="secondary-btn">Create Account</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error/Status Popup Modal -->
+    <div id="error-popup" class="popup-overlay">
+        <div class="popup-box">
+            <span class="material-icons popup-icon" id="popup-icon">info</span>
+            <h3 id="popup-title">Notification</h3>
+            <p id="popup-msg"></p>
+            <button id="close-popup">Got it</button>
         </div>
     </div>
 
