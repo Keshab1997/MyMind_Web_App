@@ -9,27 +9,21 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
-    if (event.request.method === 'POST' && (url.pathname === '/' || url.pathname.includes('index.html'))) {
+    if (event.request.method === 'POST' && url.pathname === '/') {
         event.respondWith(
             (async () => {
-                try {
-                    const formData = await event.request.formData();
-                    
-                    const sharedLink = formData.get('url') || formData.get('text') || '';
-                    const sharedTitle = formData.get('title') || '';
+                const formData = await event.request.formData();
+                const sharedLink = formData.get('url') || formData.get('text') || '';
+                const sharedTitle = formData.get('title') || '';
 
-                    const cache = await caches.open('share-data');
-                    
-                    await cache.put('shared-data', new Response(JSON.stringify({
-                        link: sharedLink,
-                        title: sharedTitle
-                    })));
+                const cache = await caches.open('share-data');
+                
+                await cache.put('shared-data', new Response(JSON.stringify({
+                    link: sharedLink,
+                    title: sharedTitle
+                })));
 
-                    return Response.redirect('./index.html?action=shared', 303);
-                } catch (error) {
-                    console.error('SW error:', error);
-                    return Response.redirect('./index.html', 303);
-                }
+                return Response.redirect('/?action=shared', 303);
             })()
         );
     }

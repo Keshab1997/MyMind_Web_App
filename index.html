@@ -58,7 +58,14 @@
     <script defer src="./features/dark_mode/dark_mode.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js');
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => {
+                        console.log('SW Registered');
+                        reg.update();
+                    })
+                    .catch(err => console.error('SW Error:', err));
+            });
         }
     </script>
 </body>
