@@ -9,7 +9,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
-    if (event.request.method === 'POST' && url.pathname === '/') {
+    if (event.request.method === 'POST' && url.pathname.includes('index.html')) {
         event.respondWith(
             (async () => {
                 const formData = await event.request.formData();
@@ -23,7 +23,7 @@ self.addEventListener('fetch', (event) => {
                     title: sharedTitle
                 })));
 
-                return Response.redirect('/?action=shared', 303);
+                return Response.redirect('./index.html?action=shared', 303);
             })()
         );
     }
