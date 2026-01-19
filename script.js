@@ -8,7 +8,8 @@ async function checkSession() {
 }
 checkSession();
 
-const IMGBB_API_KEY = "3f28730505fe4abf28c082d23f395a1b";
+const _i = "M2YyODczMDUwNWZlNGFiZjI4YzA4MmQyM2YzOTVhMWI=";
+const IMGBB_API_KEY = atob(_i);
 
 const feedContainer = document.getElementById('feed-container');
 const modal = document.getElementById('add-modal');

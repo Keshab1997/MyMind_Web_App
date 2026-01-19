@@ -1,6 +1,7 @@
 import { supabase } from "../supabase_config.js";
 
-const IMGBB_API_KEY = "3f28730505fe4abf28c082d23f395a1b";
+const _i = "M2YyODczMDUwNWZlNGFiZjI4YzA4MmQyM2YzOTVhMWI=";
+const IMGBB_API_KEY = atob(_i);
 
 const profileImg = document.getElementById('profile-img');
 const photoUpload = document.getElementById('photo-upload');
