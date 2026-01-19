@@ -17,7 +17,6 @@ const ASSETS_TO_CACHE = [
     './detail_screen/detail.js',
     './features/dark_mode/dark_mode.css',
     './features/dark_mode/dark_mode.js',
-    './features/sounds/sounds.js',
     './features/quick_note/index.html',
     './features/quick_note/style.css',
     './features/quick_note/script.js',
