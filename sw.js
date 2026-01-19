@@ -13,15 +13,23 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             (async () => {
                 const formData = await event.request.formData();
-                const sharedLink = formData.get('url') || formData.get('text') || '';
-                const sharedTitle = formData.get('title') || '';
+                const title = formData.get('title') || '';
+                const text = formData.get('text') || '';
+                const urlStr = formData.get('url') || '';
+                const mediaFile = formData.get('media');
 
                 const cache = await caches.open('share-data');
                 
                 await cache.put('shared-data', new Response(JSON.stringify({
-                    link: sharedLink,
-                    title: sharedTitle
+                    title: title,
+                    text: text,
+                    url: urlStr,
+                    hasFile: !!mediaFile
                 })));
+
+                if (mediaFile) {
+                    await cache.put('shared-file', new Response(mediaFile));
+                }
 
                 return Response.redirect('./index.html?action=shared', 303);
             })()

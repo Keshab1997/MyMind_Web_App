@@ -44,24 +44,30 @@ async function handleSharedContent() {
         feedContainer.innerHTML = "<div class='loading'>Processing shared content...</div>";
         
         const cache = await caches.open('share-data');
-        const response = await cache.match('shared-data');
+        const dataRes = await cache.match('shared-data');
         
-        if (response) {
-            const data = await response.json();
+        if (dataRes) {
+            const data = await dataRes.json();
+            const fileRes = await cache.match('shared-file');
+            
             await cache.delete('shared-data');
+            if (fileRes) await cache.delete('shared-file');
 
-            let rawLink = data.link;
-            let sharedTitle = data.title;
-
-            const urlRegex = /(https?:\/\/[^\s]+)/g;
-            const foundLinks = rawLink.match(urlRegex);
-            const finalUrl = foundLinks ? foundLinks[0] : null;
-
-            if (finalUrl) {
-                await saveLinkAutomatic(finalUrl, sharedTitle);
+            if (fileRes) {
+                const blob = await fileRes.blob();
+                const file = new File([blob], "shared_image.jpg", { type: blob.type });
+                await uploadImageAndSave(file, data.title || "Shared from Gallery");
             } else {
-                console.log('No valid URL found');
-                fetchLinks();
+                let rawLink = data.url || data.text;
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                const foundLinks = rawLink.match(urlRegex);
+                const finalUrl = foundLinks ? foundLinks[0] : null;
+
+                if (finalUrl) {
+                    await saveLinkAutomatic(finalUrl, data.title);
+                } else {
+                    fetchLinks();
+                }
             }
         } else {
             fetchLinks();
@@ -75,7 +81,7 @@ async function handleSharedContent() {
 }
 
 async function uploadImageAndSave(file, title) {
-    feedContainer.innerHTML = "<div class='loading'>Uploading image...</div>";
+    feedContainer.innerHTML = "<div class='loading'>Uploading shared image...</div>";
     try {
         const formData = new FormData();
         formData.append("image", file);
@@ -84,13 +90,14 @@ async function uploadImageAndSave(file, title) {
             body: formData
         });
         const result = await response.json();
+        
         if (result.success) {
             const { error } = await supabase.from('mind_links').insert({
                 url: result.data.url,
                 title: title || "Shared Image",
                 image_url: result.data.url,
                 thumbnail_url: result.data.thumb.url,
-                tags: "Shared, Gallery"
+                tags: "Shared, Gallery, Image"
             });
             if (!error) {
                 window.location.href = "./features/success_splash/index.html";
