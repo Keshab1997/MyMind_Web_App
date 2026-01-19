@@ -1,24 +1,121 @@
-body { margin: 0; font-family: sans-serif; background: #F5F5F5; height: 100vh; display: flex; flex-direction: column; }
-.note-container { background: white; flex: 1; display: flex; flex-direction: column; padding: 20px; }
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; color: #888; }
-.close-btn { cursor: pointer; }
-.check-btn { color: orange; cursor: pointer; font-weight: bold; }
-.title { font-size: 14px; font-weight: bold; }
+body { 
+    margin: 0; 
+    font-family: sans-serif; 
+    background: #F5F5F5; 
+    height: 100vh; 
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+}
+
+.note-container { 
+    background: white; 
+    width: 100%;
+    max-width: 800px;
+    height: 100vh;
+    display: flex; 
+    flex-direction: column; 
+    padding: 30px; 
+    box-shadow: 0 0 30px rgba(0,0,0,0.05);
+    box-sizing: border-box;
+}
+
+.header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 30px; 
+}
+
+.close-btn { 
+    cursor: pointer; 
+    color: #888;
+    transition: all 0.2s;
+    padding: 8px;
+    border-radius: 50%;
+}
+
+.close-btn:hover {
+    background: rgba(0,0,0,0.05);
+    color: #333;
+}
+
+.check-btn { 
+    color: orange; 
+    cursor: pointer; 
+    font-weight: bold;
+    transition: all 0.2s;
+    padding: 8px 16px;
+    border-radius: 8px;
+}
+
+.check-btn:hover {
+    background: rgba(255, 152, 0, 0.1);
+}
+
+.title { 
+    font-size: 14px; 
+    font-weight: bold; 
+    color: #666;
+}
 
 #note-area {
-    flex: 1; border: none; outline: none; font-size: 18px; line-height: 1.5; resize: none;
-    font-family: 'Georgia', serif; color: #333;
+    flex: 1; 
+    border: none; 
+    outline: none; 
+    font-size: 20px; 
+    line-height: 1.6; 
+    resize: none;
+    font-family: 'Georgia', serif; 
+    color: #222;
+    padding: 10px 0;
+}
+
+#note-area::placeholder {
+    color: #ccc;
+    font-style: italic;
 }
 
 .keyboard-bar {
-    padding: 15px 0; border-top: 1px solid #eee; display: flex; gap: 25px; color: #666; align-items: center;
+    padding: 20px 0; 
+    border-top: 1px solid #eee; 
+    display: flex; 
+    gap: 30px; 
+    color: #666; 
+    align-items: center;
+}
+
+.keyboard-bar span { 
+    cursor: pointer; 
+    transition: all 0.2s;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.keyboard-bar span:hover { 
+    color: orange; 
+    background: rgba(255, 152, 0, 0.1);
 }
 
 .keyboard-bar span:active {
-    color: orange;
     transform: scale(0.9);
 }
 
-#btn-spellcheck:active {
+#btn-spellcheck:hover {
     color: #4CAF50;
+    background: rgba(76, 175, 80, 0.1);
+}
+
+/* Desktop adjustments */
+@media (min-width: 768px) {
+    .note-container {
+        height: 90vh;
+        max-height: 800px;
+        border-radius: 20px;
+        padding: 40px;
+    }
+    
+    #note-area {
+        font-size: 22px;
+    }
 }
