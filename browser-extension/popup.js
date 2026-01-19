@@ -19,9 +19,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Login
     document.getElementById('do-login-btn').onclick = async () => {
         const email = document.getElementById('login-email').value.trim();
-        const pass = document.getElementById('login-pass').value;
+        const pass = document.getElementById('login-pass').value.trim();
 
-        if (!email || !pass) return showStatus("Fill all fields", "#E53935");
+        if (!email || !pass) return showStatus("Please fill all fields", "#E53935");
 
         showStatus("Logging in...", "orange");
         
@@ -34,18 +34,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                 },
                 body: JSON.stringify({ email, password: pass })
             });
+            
             const data = await res.json();
 
-            if (data.access_token) {
+            if (res.ok && data.access_token) {
+                // Check if email is verified
+                if (data.user && !data.user.email_confirmed_at && !data.user.confirmed_at) {
+                    showStatus("Please verify your email first!", "#E53935");
+                    return;
+                }
+
                 chrome.storage.local.set({ session: data }, () => {
                     showSaveView(data);
                     showStatus("✓ Logged in!", "#2e7d32");
                 });
             } else {
-                showStatus(data.error_description || "Login failed", "#E53935");
+                const errorMsg = data.error_description || data.msg || data.error || "Invalid credentials";
+                showStatus(`Login failed: ${errorMsg}`, "#E53935");
             }
         } catch (e) { 
-            showStatus("Connection error", "#E53935"); 
+            console.error(e);
+            showStatus("Network error. Check connection.", "#E53935"); 
         }
     };
 
@@ -102,7 +111,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     showStatus("✓ Saved successfully!", "#2e7d32");
                     setTimeout(() => window.close(), 1500);
                 } else {
-                    showStatus("Error saving. Try logging in again.", "#E53935");
+                    const err = await res.json();
+                    showStatus(`Save failed: ${err.message || 'Unknown error'}`, "#E53935");
                     saveBtn.disabled = false;
                     saveBtn.innerText = "Save to My Mind";
                 }
@@ -134,8 +144,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
             if (tabs[0]) {
-                document.getElementById('url').value = tabs[0].url;
-                document.getElementById('title').value = tabs[0].title;
+                document.getElementById('url').value = tabs[0].url || "";
+                document.getElementById('title').value = tabs[0].title || "";
             }
         });
     }
