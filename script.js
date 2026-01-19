@@ -32,7 +32,7 @@ function showLoader(message) {
     feedContainer.innerHTML = `
         <div class="loading-container">
             <div class="spinner"></div>
-            <div class="loading-text">${message}</div>
+            <p class="loading-text">${message}</p>
         </div>
     `;
 }

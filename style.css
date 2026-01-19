@@ -95,25 +95,30 @@ header {
     font-size: 16px;
 }
 
-/* সুন্দর লোডিং কন্টেইনার */
+/* সুন্দর এবং পারফেক্টলি সেন্টারড লোডিং কন্টেইনার */
 .loading-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 50vh;
     width: 100%;
-    gap: 15px;
+    min-height: 300px;
+    margin-top: 50px;
+    gap: 20px;
+    text-align: center;
+    /* Masonry Grid এর কলাম ভেঙে মাঝখানে আসার জন্য */
+    column-span: all;
+    grid-column: 1 / -1;
 }
 
-/* আধুনিক স্পিনার অ্যানিমেশন */
+/* আধুনিক স্পিনার */
 .spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid rgba(74, 20, 140, 0.1);
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(74, 20, 140, 0.1);
     border-left-color: #4A148C;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    animation: spin 1s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
 }
 
 @keyframes spin {
@@ -122,24 +127,25 @@ header {
 
 /* লোডিং টেক্সট স্টাইল */
 .loading-text {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
     color: #4A148C;
-    letter-spacing: 0.5px;
     font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
 }
 
-/* পালস ইফেক্ট */
+/* ডট অ্যানিমেশন */
 .loading-text::after {
-    content: '...';
-    animation: dots 1.5s steps(5, end) infinite;
+    content: '';
+    animation: dots 1.5s infinite;
 }
 
 @keyframes dots {
-    0%, 20% { content: '.'; }
-    40% { content: '..'; }
-    60% { content: '...'; }
-    80%, 100% { content: ''; }
+    0% { content: ''; }
+    33% { content: '.'; }
+    66% { content: '..'; }
+    100% { content: '...'; }
 }
 
 .card { 
