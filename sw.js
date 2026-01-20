@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-mind-cache-v2';
+const CACHE_NAME = 'my-mind-cache-v3';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -26,7 +26,8 @@ const ASSETS_TO_CACHE = [
     './splash_screen/splash.html',
     './splash_screen/splash.css',
     './splash_screen/splash.js',
-    'https://fonts.googleapis.com/icon?family=Material+Icons'
+    'https://fonts.googleapis.com/icon?family=Material+Icons',
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 ];
 
 self.addEventListener('install', (event) => {

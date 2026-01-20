@@ -335,7 +335,7 @@ function renderFeed(dataList) {
 // --- Helper: ইউটিউব থাম্বনেইল বের করা ---
 function getYouTubeThumbnail(url) {
     try {
-        const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/;
+        const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/;
         const ytMatch = url.match(youtubeRegex);
         if (ytMatch && ytMatch[1]) {
             return `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;

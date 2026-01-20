@@ -134,14 +134,15 @@ function renderTags(tagsString) {
     tagsContainer.appendChild(addBtn);
 
     if (tagsString) {
-        const tagsArray = tagsString.split(', ');
+        const tagsArray = tagsString.split(',').map(tag => tag.trim());
         tagsArray.forEach(tag => {
-            if(tag.trim() === "") return;
+            if(tag === "") return;
             
             const span = document.createElement('span');
             let tagClass = 'normal';
-            if(tag.toLowerCase().includes('video') || tag.toLowerCase().includes('youtube')) tagClass = 'video';
-            if(tag.toLowerCase().includes('social') || tag.toLowerCase().includes('instagram')) tagClass = 'social';
+            const lowerTag = tag.toLowerCase();
+            if(lowerTag.includes('video') || lowerTag.includes('youtube')) tagClass = 'video';
+            if(lowerTag.includes('social') || lowerTag.includes('instagram')) tagClass = 'social';
 
             span.className = `tag ${tagClass}`;
             span.innerText = tag;
