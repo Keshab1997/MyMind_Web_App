@@ -37,6 +37,7 @@ async function loadDetail() {
 
         // 🔥 Check if this is a note (no URL)
         const isNote = !data.url || data.url.trim() === "";
+        const isPDF = data.tags && data.tags.includes('PDF');
         
         if (isNote) {
             visitBtn.style.display = "none";
@@ -46,6 +47,26 @@ async function loadDetail() {
                     <div class="detail-note-text">${data.note || data.title}</div>
                 </div>
             `;
+        } else if (isPDF) {
+            // PDF hero section
+            visitBtn.style.display = "flex";
+            visitBtn.innerHTML = `<span class="material-icons">picture_as_pdf</span> Read PDF`;
+            visitBtn.onclick = () => window.open(data.url, '_blank');
+
+            heroContainer.style.background = "#FFEBEE";
+            heroContainer.innerHTML = `
+                <div style="width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:15px;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/337/337946.png" style="width: 80px; height: 80px;">
+                    <h3 style="color: #D32F2F; margin:0;">PDF Document</h3>
+                </div>
+                <div class="play-overlay" id="pdf-open-btn">
+                    <span class="material-icons" style="font-size: 30px; color: white;">open_in_new</span>
+                </div>
+            `;
+
+            setTimeout(() => {
+                document.getElementById('pdf-open-btn').onclick = () => window.open(data.url, '_blank');
+            }, 100);
         } else {
             visitBtn.style.display = "flex";
             visitBtn.onclick = () => window.open(data.url, '_blank');

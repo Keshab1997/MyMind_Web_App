@@ -1,6 +1,74 @@
 import { supabase } from "../supabase_config.js";
 
 const IMGBB_API_KEY = "3f28730505fe4abf28c082d23f395a1b";
+const CLOUD_NAME = "dchefh8xo";
+const UPLOAD_PRESET = "my_mind_preset";
+
+let wakeLock = null;
+
+// Wake Lock ফাংশন
+async function requestWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+            console.log('Wake Lock active');
+        }
+    } catch (err) {
+        console.error('Wake Lock error:', err);
+    }
+}
+
+function releaseWakeLock() {
+    if (wakeLock !== null) {
+        wakeLock.release();
+        wakeLock = null;
+    }
+}
+
+// নোটিফিকেশন ফাংশন
+function showUploadNotification(title, body) {
+    if (Notification.permission === "granted") {
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        
+        new Notification(title, {
+            body: body,
+            icon: "https://cdn-icons-png.flaticon.com/512/190/190411.png",
+            badge: "https://cdn-icons-png.flaticon.com/512/190/190411.png"
+        });
+    }
+}
+
+// আপলোড ফাংশন (Progress সহ)
+function uploadFileWithProgress(file, preset, resourceType) {
+    return new Promise((resolve, reject) => {
+        const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`;
+        const xhr = new XMLHttpRequest();
+        const formData = new FormData();
+        
+        formData.append("file", file);
+        formData.append("upload_preset", preset);
+
+        xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                saveBtn.innerText = `Uploading ${percentComplete}%`;
+            }
+        };
+
+        xhr.onload = () => {
+            if (xhr.status === 200) {
+                resolve(JSON.parse(xhr.responseText));
+            } else {
+                reject(JSON.parse(xhr.responseText));
+            }
+        };
+
+        xhr.onerror = () => reject(new Error("Network Error"));
+
+        xhr.open("POST", url, true);
+        xhr.send(formData);
+    });
+}
 
 const feedContainer = document.getElementById('feed-container');
 const modal = document.getElementById('add-modal');
@@ -266,6 +334,7 @@ function renderFeed(dataList) {
         
         // 🔥 Check if this is a note (no URL)
         const isNote = !item.url || item.url.trim() === "";
+        const isPDF = item.tags && item.tags.includes('PDF');
 
         if (isNote) {
             // Note card design
@@ -278,6 +347,18 @@ function renderFeed(dataList) {
                 </div>
                 <div class="card-content" style="background: rgba(0,0,0,0.03)">
                     <div class="card-title">${item.title}</div>
+                </div>
+            `;
+        } else if (isPDF) {
+            // PDF card design
+            card.className = 'card pdf-card';
+            card.innerHTML = `
+                <div class="card-header" style="background: #FFEBEE; display: flex; justify-content: center; align-items: center;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/337/337946.png" style="width: 60px; height: 60px;" alt="PDF">
+                </div>
+                <div class="card-content">
+                    <div class="card-title" style="color: #D32F2F;">${item.title}</div>
+                    <div class="card-link" style="font-size: 10px; color: #888;">PDF Document</div>
                 </div>
             `;
         } else {
@@ -460,7 +541,7 @@ saveBtn.onclick = async () => {
     const note = document.getElementById('input-note').value;
 
     if (!url && selectedFiles.length === 0) {
-        alert("Please enter a URL or select Images!");
+        alert("Please enter a URL or select files!");
         return;
     }
 
@@ -470,45 +551,65 @@ saveBtn.onclick = async () => {
     }
 
     saveBtn.disabled = true;
+    await requestWakeLock();
 
     try {
         if (selectedFiles.length > 0) {
+            if (document.hidden) {
+                showUploadNotification("Upload Started", "Don't close the app completely.");
+            }
+
             let successCount = 0;
             
             for (let i = 0; i < selectedFiles.length; i++) {
                 const file = selectedFiles[i];
-                saveBtn.innerText = `Uploading ${i + 1}/${selectedFiles.length}...`;
+                
+                let resourceType = "auto";
+                if (file.type === "application/pdf") resourceType = "raw";
 
-                const formData = new FormData();
-                formData.append("image", file);
+                try {
+                    const result = await uploadFileWithProgress(file, UPLOAD_PRESET, resourceType);
 
-                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                    method: "POST",
-                    body: formData
-                });
-                const result = await response.json();
+                    if (result.secure_url) {
+                        let typeTag = "File";
+                        let thumbUrl = "";
 
-                if (result.success) {
-                    const { error } = await supabase
-                        .from('mind_links')
-                        .insert({ 
-                            url: result.data.url, 
-                            title: title || `My Photo ${i + 1}`, 
-                            note: note,
-                            image_url: result.data.url,
-                            thumbnail_url: result.data.thumb.url,
-                            tags: "Image, Upload, Gallery"
-                        });
-                    
-                    if (!error) successCount++;
+                        if (result.resource_type === 'video' || file.type.startsWith('video/')) {
+                            typeTag = "Video, Clip";
+                            thumbUrl = result.secure_url.replace(/\.[^/.]+$/, ".jpg");
+                        } else if (file.type === "application/pdf") {
+                            typeTag = "PDF, Document";
+                            thumbUrl = "https://cdn-icons-png.flaticon.com/512/337/337946.png";
+                        } else {
+                            typeTag = "Image, Gallery";
+                            thumbUrl = result.secure_url;
+                        }
+
+                        const { error } = await supabase
+                            .from('mind_links')
+                            .insert({ 
+                                url: result.secure_url, 
+                                title: title || file.name, 
+                                note: note,
+                                image_url: thumbUrl,
+                                thumbnail_url: thumbUrl,
+                                tags: `Upload, ${typeTag}`
+                            });
+                        
+                        if (!error) successCount++;
+                    }
+                } catch (err) {
+                    console.error("Upload failed for file:", file.name, err);
                 }
             }
             
             if (successCount > 0) {
+                showUploadNotification("Upload Complete! 🎉", `${successCount} files saved to your mind.`);
                 fetchLinks();
                 closeModal();
             } else {
-                alert("Failed to upload images.");
+                showUploadNotification("Upload Failed ❌", "Something went wrong.");
+                alert("Failed to upload files.");
             }
 
         } else {
@@ -557,11 +658,13 @@ saveBtn.onclick = async () => {
         }
 
     } catch (error) {
+        showUploadNotification("Error", error.message);
         alert("Error: " + error.message);
         console.error(error);
     } finally {
         saveBtn.innerHTML = "Save";
         saveBtn.disabled = false;
+        releaseWakeLock();
     }
 };
 
