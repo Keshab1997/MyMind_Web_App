@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loginView = document.getElementById('login-view');
     const saveView = document.getElementById('save-view');
     const statusDiv = document.getElementById('status');
-    const loggedInAs = document.getElementById('logged-in-as');
 
     // Check session
     chrome.storage.local.get(['session'], (result) => {
@@ -46,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 chrome.storage.local.set({ session: data }, () => {
                     showSaveView(data);
-                    showStatus("✓ Logged in!", "#2e7d32");
+                    showStatus("\u2713 Logged in!", "#2e7d32");
                 });
             } else {
                 const errorMsg = data.error_description || data.msg || data.error || "Invalid credentials";
@@ -108,7 +107,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
 
                 if (res.ok) {
-                    showStatus("✓ Saved successfully!", "#2e7d32");
+                    showStatus("\u2713 Saved successfully!", "#2e7d32");
                     setTimeout(() => window.close(), 1500);
                 } else {
                     const err = await res.json();
@@ -140,7 +139,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     function showSaveView(session) {
         loginView.classList.add('hidden');
         saveView.classList.remove('hidden');
-        loggedInAs.innerText = `✓ ${session.user.email}`;
+        
+        const user = session.user;
+        const meta = user.user_metadata || {};
+        const fullName = meta.full_name || user.email.split('@')[0];
+        const avatarUrl = meta.avatar_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+        
+        document.getElementById('p-name').innerText = fullName;
+        document.getElementById('p-email').innerText = user.email;
+        document.getElementById('p-avatar').src = avatarUrl;
         
         chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
             if (tabs[0]) {

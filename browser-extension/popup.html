@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <style>
     body { width: 320px; padding: 16px; font-family: 'Segoe UI', system-ui, sans-serif; background: #FDF2F8; margin: 0; }
     .container { display: flex; flex-direction: column; gap: 12px; }
     h3 { color: #4A148C; margin: 0 0 12px 0; font-size: 18px; display: flex; align-items: center; justify-content: space-between; }
-    .user-info { font-size: 11px; color: #555; background: #fff; padding: 6px 12px; border-radius: 20px; margin-bottom: 8px; }
+    .profile-box { display: flex; align-items: center; gap: 10px; background: white; padding: 10px; border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+    .profile-img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #eee; }
+    .profile-info { display: flex; flex-direction: column; overflow: hidden; }
+    .p-name { font-weight: 700; font-size: 13px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .p-email { font-size: 10px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; font-weight: 500; }
     input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 13px; font-family: inherit; }
     input:focus, textarea:focus { outline: none; border-color: orange; }
@@ -43,7 +48,13 @@
       Save to Mind
       <button id="do-logout-btn" class="logout-btn">Logout</button>
     </h3>
-    <div id="logged-in-as" class="user-info"></div>
+    <div class="profile-box">
+      <img id="p-avatar" class="profile-img" src="" alt="User">
+      <div class="profile-info">
+        <span id="p-name" class="p-name">Loading...</span>
+        <span id="p-email" class="p-email">...</span>
+      </div>
+    </div>
     
     <div class="input-group">
       <label>Link (URL)</label>
