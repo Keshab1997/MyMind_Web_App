@@ -130,6 +130,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
+    // Open App
+    document.getElementById('open-app-btn').onclick = () => {
+        chrome.tabs.create({ url: "https://keshab1997.github.io/MyMind_Web_App/" });
+    };
+
     // Logout
     document.getElementById('do-logout-btn').onclick = () => {
         chrome.storage.local.remove(['session'], () => {
