@@ -573,6 +573,7 @@ saveBtn.onclick = async () => {
                     if (result.secure_url) {
                         let typeTag = "File";
                         let thumbUrl = "";
+                        let finalUrl = result.secure_url;
 
                         if (result.resource_type === 'video' || file.type.startsWith('video/')) {
                             typeTag = "Video, Clip";
@@ -580,6 +581,11 @@ saveBtn.onclick = async () => {
                         } else if (file.type === "application/pdf") {
                             typeTag = "PDF, Document";
                             thumbUrl = "https://cdn-icons-png.flaticon.com/512/337/337946.png";
+                            
+                            // PDF যাতে ব্রাউজারে ওপেন হয়
+                            if (!finalUrl.endsWith('.pdf')) {
+                                finalUrl = finalUrl + '.pdf';
+                            }
                         } else {
                             typeTag = "Image, Gallery";
                             thumbUrl = result.secure_url;
@@ -588,7 +594,7 @@ saveBtn.onclick = async () => {
                         const { error } = await supabase
                             .from('mind_links')
                             .insert({ 
-                                url: result.secure_url, 
+                                url: finalUrl, 
                                 title: title || file.name, 
                                 note: note,
                                 image_url: thumbUrl,
