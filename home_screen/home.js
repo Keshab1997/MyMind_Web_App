@@ -587,3 +587,46 @@ function generateTags(url) {
     }
     return tags.join(", ");
 }
+
+// ==========================================
+// DRAG & DROP FEATURE
+// ==========================================
+
+const dropZone = document.body;
+
+// ফাইল যখন অ্যাপের ওপর আনা হবে (Drag Over)
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.style.opacity = "0.6";
+    dropZone.style.border = "4px dashed #FF9800";
+});
+
+// ফাইল যখন অ্যাপের ওপর থেকে সরিয়ে নেওয়া হবে (Drag Leave)
+dropZone.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    resetDropZone();
+});
+
+// ফাইল যখন ছেড়ে দেওয়া হবে (Drop)
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    resetDropZone();
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        const droppedFiles = Array.from(e.dataTransfer.files);
+        selectedFiles = [...selectedFiles, ...droppedFiles];
+        
+        modal.style.display = 'flex';
+        renderPreviews();
+        
+        urlInput.disabled = true;
+        urlInput.placeholder = `${selectedFiles.length} files ready to upload`;
+        urlInput.value = "";
+    }
+});
+
+// স্টাইল রিসেট করার ফাংশন
+function resetDropZone() {
+    dropZone.style.opacity = "1";
+    dropZone.style.border = "none";
+}
