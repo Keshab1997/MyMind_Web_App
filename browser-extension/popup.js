@@ -86,6 +86,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 } catch (e) {}
 
+                let autoTags = "Extension";
+                if (url.includes("youtube.com") || url.includes("youtu.be")) {
+                    autoTags += ", Video, YouTube";
+                } else if (url.includes("instagram.com")) {
+                    autoTags += ", Social, Instagram";
+                } else if (url.includes("github.com")) {
+                    autoTags += ", Code, Dev";
+                } else if (url.includes("medium.com") || url.includes("blog")) {
+                    autoTags += ", Article, Blog";
+                }
+
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/mind_links`, {
                     method: 'POST',
                     headers: {
@@ -102,7 +113,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         thumbnail_url: imageUrl,
                         description,
                         user_id: session.user.id,
-                        tags: "Extension, Desktop"
+                        tags: autoTags
                     })
                 });
 
@@ -165,6 +176,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (tabs[0]) {
                 document.getElementById('url').value = tabs[0].url || "";
                 document.getElementById('title').value = tabs[0].title || "";
+                
+                chrome.scripting.executeScript({
+                    target: { tabId: tabs[0].id },
+                    function: () => window.getSelection().toString()
+                }, (results) => {
+                    if (results && results[0] && results[0].result) {
+                        document.getElementById('note').value = results[0].result;
+                    }
+                });
             }
         });
     }
