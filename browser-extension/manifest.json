@@ -3,11 +3,14 @@
   "name": "My Mind Saver",
   "version": "1.4",
   "description": "Save links directly to your My Mind feed with Auth.",
-  "permissions": ["activeTab", "storage", "scripting", "<all_urls>"],
+  "permissions": ["activeTab", "storage", "scripting", "contextMenus", "notifications", "<all_urls>"],
   "host_permissions": [
     "https://cmrgloxlyovihqhdxdls.supabase.co/*",
     "https://api.microlink.io/*"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
