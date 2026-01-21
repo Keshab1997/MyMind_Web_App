@@ -110,6 +110,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     showStatus("\u2713 Saved successfully!", "#2e7d32");
                     setTimeout(() => window.close(), 1500);
                 } else {
+                    if (res.status === 401) {
+                        chrome.storage.local.remove(['session'], () => {
+                            showStatus("Session expired. Please login again.", "#E53935");
+                            setTimeout(() => showLoginView(), 2000);
+                        });
+                        return;
+                    }
                     const err = await res.json();
                     showStatus(`Save failed: ${err.message || 'Unknown error'}`, "#E53935");
                     saveBtn.disabled = false;
