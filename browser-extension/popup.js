@@ -87,6 +87,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } catch (e) {}
 
                 let autoTags = "Extension";
+                
+                if (document.getElementById('is-fav').checked) {
+                    autoTags += ", Important, Favorite";
+                }
+                
                 if (url.includes("youtube.com") || url.includes("youtu.be")) {
                     autoTags += ", Video, YouTube";
                 } else if (url.includes("instagram.com")) {
@@ -119,6 +124,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (res.ok) {
                     showStatus("\u2713 Saved successfully!", "#2e7d32");
+                    loadRecents(session);
                     setTimeout(() => window.close(), 1500);
                 } else {
                     if (res.status === 401) {
@@ -172,6 +178,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('p-email').innerText = user.email;
         document.getElementById('p-avatar').src = avatarUrl;
         
+        loadRecents(session);
+        
         chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
             if (tabs[0]) {
                 document.getElementById('url').value = tabs[0].url || "";
@@ -192,5 +200,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     function showStatus(msg, color) {
         statusDiv.innerText = msg;
         statusDiv.style.color = color;
+    }
+    
+    async function loadRecents(session) {
+        const recentSection = document.getElementById('recent-section');
+        const recentList = document.getElementById('recent-list');
+        
+        recentSection.classList.remove('hidden');
+
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/mind_links?select=title,url,thumbnail_url&limit=3&order=created_at.desc`, {
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            });
+            
+            const data = await res.json();
+            
+            if (data.length > 0) {
+                recentList.innerHTML = data.map(item => {
+                    const img = item.thumbnail_url || "https://cdn-icons-png.flaticon.com/512/3062/3062634.png";
+                    return `
+                        <a href="${item.url}" target="_blank" style="display: flex; gap: 8px; align-items: center; text-decoration: none; background: #f9f9f9; padding: 5px; border-radius: 6px;">
+                            <img src="${img}" style="width: 24px; height: 24px; border-radius: 4px; object-fit: cover;">
+                            <span style="font-size: 11px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
+                                ${item.title}
+                            </span>
+                        </a>
+                    `;
+                }).join('');
+            } else {
+                recentList.innerHTML = '<div style="font-size:11px; color:#999; text-align:center;">No saves yet</div>';
+            }
+        } catch (e) {
+            console.error(e);
+            recentList.innerHTML = '<div style="font-size:11px; color:red; text-align:center;">Failed to load</div>';
+        }
     }
 });
