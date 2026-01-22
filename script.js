@@ -371,7 +371,34 @@ function renderFeed(dataList) {
             card.appendChild(cardContent);
         }
         
-        card.onclick = () => window.location.href = `./detail_screen/detail.html?id=${item.id}`;
+        // Touch events for mobile PWA
+        let pressTimer;
+        let isLongPress = false;
+
+        const startPress = () => {
+            isLongPress = false;
+            pressTimer = setTimeout(() => {
+                isLongPress = true;
+                if (navigator.vibrate) navigator.vibrate(50);
+            }, 600);
+        };
+
+        const cancelPress = () => clearTimeout(pressTimer);
+
+        card.addEventListener('touchstart', startPress, {passive: true});
+        card.addEventListener('touchend', cancelPress);
+        card.addEventListener('touchmove', cancelPress);
+        card.addEventListener('mousedown', startPress);
+        card.addEventListener('mouseup', cancelPress);
+        card.addEventListener('mouseleave', cancelPress);
+        
+        card.onclick = () => {
+            if (isLongPress) {
+                isLongPress = false;
+                return;
+            }
+            window.location.href = `./detail_screen/detail.html?id=${item.id}`;
+        };
         feedContainer.appendChild(card);
     });
 }
