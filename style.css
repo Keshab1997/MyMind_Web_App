@@ -85,9 +85,64 @@ header {
     padding: 10px;
     border-radius: 50%;
     transition: var(--transition);
+    flex-shrink: 0;
 }
 
 .header-icon-btn:hover { background: rgba(0,0,0,0.05); }
+
+/* Multi-Delete Bar */
+.multi-action-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #4A148C;
+    color: white;
+    padding: 15px 20px;
+    padding-top: max(15px, env(safe-area-inset-top));
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1001;
+    box-sizing: border-box;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+#selected-count {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.action-btn {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    transition: var(--transition);
+}
+
+.action-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.action-btn.delete {
+    background: #E53935;
+}
+
+.action-btn.delete:hover {
+    background: #C62828;
+}
+
+.card.selected {
+    border: 3px solid #4A148C;
+    transform: scale(0.95);
+}
 
 .add-btn { 
     background: var(--accent-orange); 

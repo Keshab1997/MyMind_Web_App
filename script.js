@@ -26,6 +26,8 @@ const searchInput = document.getElementById('search-input');
 let selectedFiles = [];
 let allLinksData = [];
 let realtimeChannel = null;
+let selectedIds = [];
+let isSelectMode = false;
 
 // সুন্দর লোডার দেখানোর ফাংশন
 function showLoader(message) {
@@ -59,7 +61,75 @@ window.onload = async () => {
 
     fetchLinks();
     setupRealtimeSubscription();
+    setupSelectionMode();
 };
+
+// Selection Mode Setup
+function setupSelectionMode() {
+    const multiSelectBtn = document.getElementById('multi-select-btn');
+    const multiDeleteBar = document.getElementById('multi-delete-bar');
+    const cancelSelection = document.getElementById('cancel-selection');
+    const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+    const selectedCountEl = document.getElementById('selected-count');
+
+    multiSelectBtn.onclick = () => {
+        if (isSelectMode) {
+            exitSelectionMode();
+        } else {
+            startSelectionMode();
+        }
+    };
+
+    cancelSelection.onclick = exitSelectionMode;
+
+    deleteSelectedBtn.onclick = async () => {
+        if (selectedIds.length === 0) return;
+        if (!confirm(`Delete ${selectedIds.length} items?`)) return;
+
+        deleteSelectedBtn.disabled = true;
+        deleteSelectedBtn.innerHTML = '<span class="material-icons">refresh</span> Deleting...';
+
+        const { error } = await supabase.from('mind_links').delete().in('id', selectedIds);
+
+        if (!error) {
+            exitSelectionMode();
+            fetchLinks();
+        } else {
+            alert("Error deleting items: " + error.message);
+        }
+        
+        deleteSelectedBtn.disabled = false;
+        deleteSelectedBtn.innerHTML = '<span class="material-icons">delete</span> Delete';
+    };
+
+    function startSelectionMode(firstId, firstCard) {
+        isSelectMode = true;
+        multiDeleteBar.style.display = 'flex';
+        if (firstId && firstCard) toggleSelection(firstId, firstCard);
+    }
+
+    function exitSelectionMode() {
+        isSelectMode = false;
+        selectedIds = [];
+        multiDeleteBar.style.display = 'none';
+        document.querySelectorAll('.card.selected').forEach(c => c.classList.remove('selected'));
+    }
+
+    function toggleSelection(id, cardElement) {
+        if (selectedIds.includes(id)) {
+            selectedIds = selectedIds.filter(i => i !== id);
+            cardElement.classList.remove('selected');
+        } else {
+            selectedIds.push(id);
+            cardElement.classList.add('selected');
+        }
+        selectedCountEl.innerText = `${selectedIds.length} selected`;
+        if (selectedIds.length === 0) exitSelectionMode();
+    }
+
+    window.startSelectionMode = startSelectionMode;
+    window.toggleSelection = toggleSelection;
+}
 
 // Real-time Updates
 function setupRealtimeSubscription() {
@@ -380,6 +450,7 @@ function renderFeed(dataList) {
             pressTimer = setTimeout(() => {
                 isLongPress = true;
                 if (navigator.vibrate) navigator.vibrate(50);
+                if (!isSelectMode) window.startSelectionMode(item.id, card);
             }, 600);
         };
 
@@ -397,7 +468,12 @@ function renderFeed(dataList) {
                 isLongPress = false;
                 return;
             }
-            window.location.href = `./detail_screen/detail.html?id=${item.id}`;
+            
+            if (isSelectMode) {
+                window.toggleSelection(item.id, card);
+            } else {
+                window.location.href = `./detail_screen/detail.html?id=${item.id}`;
+            }
         };
         feedContainer.appendChild(card);
     });

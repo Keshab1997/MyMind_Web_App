@@ -16,11 +16,28 @@
             <span class="material-icons">search</span>
             <input type="text" id="search-input" placeholder="Search title, tags, notes...">
         </div>
+        <button id="multi-select-btn" class="header-icon-btn" title="Select Items">
+            <span class="material-icons">checklist</span>
+        </button>
         <button id="dark-mode-toggle" class="header-icon-btn">
             <span class="material-icons">dark_mode</span>
         </button>
         <button id="open-modal-btn" class="add-btn"><span class="material-icons">add</span></button>
     </header>
+
+    <div id="multi-delete-bar" class="multi-action-bar">
+        <div>
+            <span id="selected-count">0 selected</span>
+        </div>
+        <div style="display: flex; gap: 15px;">
+            <button id="cancel-selection" class="action-btn">
+                <span class="material-icons">close</span>
+            </button>
+            <button id="delete-selected-btn" class="action-btn delete">
+                <span class="material-icons">delete</span> Delete
+            </button>
+        </div>
+    </div>
 
     <main id="feed-container">
         <div class="loading">Loading your mind...</div>
