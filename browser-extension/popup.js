@@ -1,5 +1,6 @@
 const SUPABASE_URL = 'https://cmrgloxlyovihqhdxdls.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNtcmdsb3hseW92aWhxaGR4ZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg3NDQ2MDEsImV4cCI6MjA4NDMyMDYwMX0.-boSPxeSV4Q_6lX7rcXauRrpAw--YA-MGAH_IknXa84';
+const IMGBB_API_KEY = "3f28730505fe4abf28c082d23f395a1b";
 
 let pageData = {};
 
@@ -57,6 +58,52 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error(e);
             showStatus("Network error. Check connection.", "#E53935"); 
         }
+    };
+
+    // Screenshot Logic
+    document.getElementById('screenshot-btn').onclick = () => {
+        const btn = document.getElementById('screenshot-btn');
+        btn.innerText = "⏳";
+        btn.disabled = true;
+
+        chrome.tabs.captureVisibleTab(null, {format: 'jpeg', quality: 50}, async (dataUrl) => {
+            if (chrome.runtime.lastError) {
+                btn.innerText = "📷";
+                btn.disabled = false;
+                showStatus("Screenshot failed!", "red");
+                return;
+            }
+
+            try {
+                showStatus("Uploading screenshot...", "orange");
+
+                const res = await fetch(dataUrl);
+                const blob = await res.blob();
+
+                const formData = new FormData();
+                formData.append("image", blob);
+
+                const uploadRes = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                    method: "POST",
+                    body: formData
+                });
+                const result = await uploadRes.json();
+
+                if (result.success) {
+                    pageData.image = result.data.url;
+                    btn.innerText = "✅";
+                    btn.style.background = "#C8E6C9";
+                    showStatus("Screenshot attached!", "green");
+                } else {
+                    throw new Error("Upload failed");
+                }
+            } catch (e) {
+                btn.innerText = "📷";
+                btn.disabled = false;
+                showStatus("Upload failed. Try again.", "red");
+                console.error(e);
+            }
+        });
     };
 
     // Save
