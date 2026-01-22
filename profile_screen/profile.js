@@ -31,8 +31,8 @@ window.onload = async () => {
         editEmail.value = user.email;
         displayEmailTop.innerText = user.email;
         
-        const name = user.user_metadata.full_name || user.email.split('@')[0];
-        const avatar = user.user_metadata.avatar_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+        const name = user.user_metadata?.full_name || user.email.split('@')[0];
+        const avatar = user.user_metadata?.avatar_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
         
         editName.value = name;
         displayNameTop.innerText = name;
@@ -54,7 +54,14 @@ photoUpload.onchange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    showStatus("Uploading photo...", "orange");
+    // Validate file size (Max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+        showStatus("Image size must be less than 2MB", "red");
+        return;
+    }
+
+    showStatus("Uploading photo... please wait", "orange");
+    profileImg.style.opacity = "0.5";
     
     const formData = new FormData();
     formData.append("image", file);
@@ -70,9 +77,13 @@ photoUpload.onchange = async (e) => {
             const newAvatarUrl = result.data.url;
             profileImg.src = newAvatarUrl;
             showStatus("Photo uploaded! Click Save to apply.", "green");
+        } else {
+            throw new Error("Upload failed");
         }
     } catch (err) {
         showStatus("Photo upload failed.", "red");
+    } finally {
+        profileImg.style.opacity = "1";
     }
 };
 
@@ -88,7 +99,7 @@ saveBtn.onclick = async () => {
     }
 
     saveBtn.disabled = true;
-    saveBtn.innerText = "Saving...";
+    saveBtn.innerHTML = `<span class="material-icons spin">refresh</span> Saving...`;
 
     try {
         const updateData = {
@@ -108,7 +119,7 @@ saveBtn.onclick = async () => {
         if (error) throw error;
 
         displayNameTop.innerText = name;
-        showStatus("Profile updated successfully!", "green");
+        showStatus(password ? "Profile & Password updated!" : "Profile updated successfully!", "green");
         newPassword.value = "";
         newPassword.setAttribute('type', 'password');
         togglePassIcon.innerText = 'visibility';
@@ -122,11 +133,23 @@ saveBtn.onclick = async () => {
 
 // Logout
 document.getElementById('logout-btn').onclick = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "../login.html";
+    if(confirm("Are you sure you want to log out?")) {
+        await supabase.auth.signOut();
+        
+        // Clear cache to prevent data leak
+        localStorage.removeItem('mind_links_cache');
+        localStorage.clear();
+        
+        window.location.href = "../login.html";
+    }
 };
 
 function showStatus(msg, color) {
     statusMsg.innerText = msg;
     statusMsg.style.color = color;
+    
+    // Auto clear after 5 seconds
+    setTimeout(() => {
+        if(statusMsg.innerText === msg) statusMsg.innerText = "";
+    }, 5000);
 }

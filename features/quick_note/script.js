@@ -15,8 +15,54 @@ const saveBtn = document.getElementById('save-note-btn');
 const btnCase = document.getElementById('btn-format-case');
 const btnList = document.getElementById('btn-list');
 const btnImage = document.getElementById('btn-image');
-const btnSpellcheck = document.getElementById('btn-spellcheck');
+const btnMic = document.getElementById('btn-mic');
 const fileInput = document.getElementById('note-file-input');
+
+// Voice Status Indicator
+const statusIndicator = document.createElement('div');
+statusIndicator.style.cssText = "position:fixed; top:10px; left:50%; transform:translateX(-50%); background:#EF4444; color:white; padding:8px 16px; border-radius:20px; font-size:12px; display:none; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.2);";
+statusIndicator.innerText = "🎤 Listening...";
+document.body.appendChild(statusIndicator);
+
+// --- Voice Typing (Speech to Text) ---
+let recognition;
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+        statusIndicator.style.display = 'block';
+        btnMic.style.color = '#EF4444';
+    };
+
+    recognition.onend = () => {
+        statusIndicator.style.display = 'none';
+        btnMic.style.color = '#666';
+    };
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        insertAtCursor(noteArea, transcript + " ");
+    };
+
+    recognition.onerror = () => {
+        statusIndicator.style.display = 'none';
+        btnMic.style.color = '#666';
+    };
+} else {
+    btnMic.style.display = 'none';
+}
+
+btnMic.onclick = () => {
+    if (recognition) {
+        try { recognition.start(); } catch(e) { recognition.stop(); }
+    } else {
+        alert("Voice typing not supported in this browser.");
+    }
+};
 
 // --- 1. Aa (Toggle Case) ---
 btnCase.onclick = () => {
@@ -38,12 +84,16 @@ btnCase.onclick = () => {
 
 // --- 2. List (Bullet Points) ---
 btnList.onclick = () => {
-    const start = noteArea.selectionStart;
+    const cursor = noteArea.selectionStart;
     const text = noteArea.value;
-    const newText = text.substring(0, start) + "\n• " + text.substring(start);
-    noteArea.value = newText;
+    const before = text.substring(0, cursor);
+    const after = text.substring(cursor);
+    
+    const prefix = (before.endsWith('\n') || before === '') ? "• " : "\n• ";
+    
+    noteArea.value = before + prefix + after;
     noteArea.focus();
-    noteArea.setSelectionRange(start + 3, start + 3);
+    noteArea.selectionStart = noteArea.selectionEnd = cursor + prefix.length;
 };
 
 // --- 3. Image (Upload to ImgBB & Insert Link) ---
@@ -52,8 +102,8 @@ btnImage.onclick = () => fileInput.click();
 fileInput.onchange = async (e) => {
     if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
-        const originalText = noteArea.value;
-        noteArea.value += "\n[Uploading image...]";
+        const placeholder = "\n[Uploading image...]\n";
+        insertAtCursor(noteArea, placeholder);
         
         try {
             const formData = new FormData();
@@ -63,68 +113,20 @@ fileInput.onchange = async (e) => {
                 body: formData
             });
             const result = await response.json();
+            
             if (result.success) {
-                noteArea.value = originalText + `\n${result.data.url}\n`;
+                noteArea.value = noteArea.value.replace(placeholder, `\n${result.data.url}\n`);
+            } else {
+                throw new Error("Upload failed");
             }
         } catch (err) {
             alert("Image upload failed!");
-            noteArea.value = originalText;
+            noteArea.value = noteArea.value.replace(placeholder, "");
         }
     }
 };
 
-// --- 4. Spellcheck & Auto-Fix (Only for Selected Text) ---
-btnSpellcheck.onclick = async () => {
-    const start = noteArea.selectionStart;
-    const end = noteArea.selectionEnd;
-    const selectedText = noteArea.value.substring(start, end);
-
-    if (!selectedText) {
-        alert("Please select the text you want to check!");
-        return;
-    }
-
-    btnSpellcheck.style.color = "orange";
-    
-    try {
-        const response = await fetch("https://api.languagetool.org/v2/check", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `text=${encodeURIComponent(selectedText)}&language=en-US`
-        });
-
-        const result = await response.json();
-        const matches = result.matches;
-
-        if (matches.length === 0) {
-            alert("No errors found in the selected text!");
-            btnSpellcheck.style.color = "#666";
-            return;
-        }
-
-        let fixedSnippet = selectedText;
-        for (let i = matches.length - 1; i >= 0; i--) {
-            const match = matches[i];
-            if (match.replacements && match.replacements.length > 0) {
-                const suggestion = match.replacements[0].value;
-                fixedSnippet = fixedSnippet.substring(0, match.offset) + 
-                               suggestion + 
-                               fixedSnippet.substring(match.offset + match.length);
-            }
-        }
-
-        noteArea.setRangeText(fixedSnippet);
-        alert(`Fixed ${matches.length} errors in the selected section!`);
-        
-    } catch (err) {
-        console.error("Spellcheck failed:", err);
-        alert("Spellcheck service is currently unavailable.");
-    } finally {
-        btnSpellcheck.style.color = "#666";
-    }
-};
-
-// --- 5. Save Note ---
+// --- 4. Save Note ---
 saveBtn.onclick = async () => {
     const text = noteArea.value.trim();
     if(!text) {
@@ -133,14 +135,15 @@ saveBtn.onclick = async () => {
     }
 
     saveBtn.innerText = "hourglass_empty";
-    const title = text.split(/\s+/).slice(0, 3).join(' ') + "...";
+    
+    // Generate title from first line
+    const title = text.split('\n')[0].substring(0, 40) + (text.length > 40 ? "..." : "");
     
     const { error } = await supabase.from('mind_links').insert({
         title: title,
         note: text,
         url: "",
         tags: "Note, Quick Idea",
-        image_url: null,
         created_at: new Date()
     });
 
@@ -151,3 +154,15 @@ saveBtn.onclick = async () => {
         saveBtn.innerText = "check";
     }
 };
+
+// Helper: Insert text at cursor position
+function insertAtCursor(input, textToInsert) {
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const text = input.value;
+    const before = text.substring(0, start);
+    const after = text.substring(end, text.length);
+    input.value = before + textToInsert + after;
+    input.selectionStart = input.selectionEnd = start + textToInsert.length;
+    input.focus();
+}

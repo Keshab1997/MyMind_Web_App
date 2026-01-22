@@ -12,6 +12,7 @@ const params = new URLSearchParams(window.location.search);
 const docId = params.get('id');
 
 let currentData = {};
+let saveTimeout = null;
 
 if(!docId) {
     window.location.href = "../home_screen/home.html";
@@ -30,7 +31,18 @@ async function loadDetail() {
         alert("Link not found!");
     } else {
         currentData = data;
-        document.getElementById('header-title').innerText = data.title || "Untitled";
+        const headerTitle = document.getElementById('header-title');
+        headerTitle.innerText = data.title || "Untitled";
+        
+        // Make title editable
+        headerTitle.contentEditable = true;
+        headerTitle.onblur = () => updateTitle(headerTitle.innerText);
+        headerTitle.onkeydown = (e) => { 
+            if(e.key === 'Enter') { 
+                e.preventDefault(); 
+                headerTitle.blur(); 
+            }
+        };
         
         const heroContainer = document.getElementById('hero-container');
         const visitBtn = document.getElementById('visit-btn');
@@ -42,11 +54,13 @@ async function loadDetail() {
         if (isNote) {
             visitBtn.style.display = "none";
             heroContainer.classList.add('bg-note');
-            heroContainer.innerHTML = `
-                <div class="detail-note-paper">
-                    <div class="detail-note-text">${data.note || data.title}</div>
-                </div>
-            `;
+            const notePaper = document.createElement('div');
+            notePaper.className = 'detail-note-paper';
+            const noteText = document.createElement('div');
+            noteText.className = 'detail-note-text';
+            noteText.textContent = data.note || data.title;
+            notePaper.appendChild(noteText);
+            heroContainer.appendChild(notePaper);
         } else if (isPDF) {
             // PDF hero section
             visitBtn.style.display = "flex";
@@ -81,43 +95,56 @@ async function loadDetail() {
                 console.warn('Invalid URL:', data.url);
             }
             
-            const titleOverlay = `
-                <div class="gradient-overlay"></div>
-                <div class="card-text">
-                    <h2>${data.title}</h2>
-                    <p style="font-size: 12px; opacity: 0.9; margin-top: 5px; color: #ddd;">${hostname}</p>
-                </div>
-            `;
+            const gradientOverlay = document.createElement('div');
+            gradientOverlay.className = 'gradient-overlay';
+            
+            const cardText = document.createElement('div');
+            cardText.className = 'card-text';
+            
+            const titleH2 = document.createElement('h2');
+            titleH2.textContent = data.title;
+            
+            const hostP = document.createElement('p');
+            hostP.style.cssText = 'font-size: 12px; opacity: 0.9; margin-top: 5px; color: #ddd;';
+            hostP.textContent = hostname;
+            
+            cardText.appendChild(titleH2);
+            cardText.appendChild(hostP);
 
             if (youtubeId) {
-                heroContainer.innerHTML = `
-                    <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${youtubeId}?controls=0" frameborder="0" allowfullscreen style="border-radius: 24px;"></iframe>
-                `;
+                const iframe = document.createElement('iframe');
+                iframe.width = '100%';
+                iframe.height = '100%';
+                iframe.src = `https://www.youtube.com/embed/${youtubeId}?controls=0`;
+                iframe.frameBorder = '0';
+                iframe.allowFullscreen = true;
+                iframe.style.borderRadius = '24px';
+                heroContainer.appendChild(iframe);
             } else if (data.image_url) {
-                heroContainer.innerHTML = `
-                    <img src="${data.image_url}" class="hero-img">
-                    <div class="play-overlay" id="main-play-btn">
-                        <span class="material-icons" style="font-size: 40px; color: white;">play_arrow</span>
-                    </div>
-                    ${titleOverlay}
-                `;
+                const img = document.createElement('img');
+                img.src = data.image_url;
+                img.className = 'hero-img';
                 
-                setTimeout(() => {
-                    const playBtn = document.getElementById('main-play-btn');
-                    if(playBtn) {
-                        playBtn.onclick = (e) => {
-                            e.stopPropagation();
-                            window.open(data.url, '_blank');
-                        };
-                    }
-                }, 100);
+                const playOverlay = document.createElement('div');
+                playOverlay.className = 'play-overlay';
+                playOverlay.innerHTML = '<span class="material-icons" style="font-size: 40px; color: white;">play_arrow</span>';
+                playOverlay.onclick = (e) => {
+                    e.stopPropagation();
+                    window.open(data.url, '_blank');
+                };
+                
+                heroContainer.appendChild(img);
+                heroContainer.appendChild(playOverlay);
+                heroContainer.appendChild(gradientOverlay);
+                heroContainer.appendChild(cardText);
             } else {
-                heroContainer.innerHTML = `
-                    <div style="width:100%; height:100%; background:#333; display:flex; justify-content:center; align-items:center;">
-                        <span class="material-icons" style="font-size:50px; color:white;">link</span>
-                    </div>
-                    ${titleOverlay}
-                `;
+                const placeholder = document.createElement('div');
+                placeholder.style.cssText = 'width:100%; height:100%; background:#333; display:flex; justify-content:center; align-items:center;';
+                placeholder.innerHTML = '<span class="material-icons" style="font-size:50px; color:white;">link</span>';
+                
+                heroContainer.appendChild(placeholder);
+                heroContainer.appendChild(gradientOverlay);
+                heroContainer.appendChild(cardText);
             }
         }
 
@@ -143,30 +170,37 @@ async function loadDetail() {
     }
 }
 
-// Render Tags
+// Render Tags with Remove Button
 function renderTags(tagsString) {
     const tagsContainer = document.getElementById('tags-container');
     tagsContainer.innerHTML = '';
     
     const addBtn = document.createElement('span');
     addBtn.className = 'tag add-tag';
-    addBtn.innerText = '+ Add tag';
+    addBtn.innerHTML = '<span class="material-icons" style="font-size:14px">add</span> Add';
     addBtn.onclick = addNewTag;
     tagsContainer.appendChild(addBtn);
 
     if (tagsString) {
-        const tagsArray = tagsString.split(',').map(tag => tag.trim());
+        const tagsArray = tagsString.split(',').map(tag => tag.trim()).filter(t => t);
         tagsArray.forEach(tag => {
-            if(tag === "") return;
-            
             const span = document.createElement('span');
-            let tagClass = 'normal';
-            const lowerTag = tag.toLowerCase();
-            if(lowerTag.includes('video') || lowerTag.includes('youtube')) tagClass = 'video';
-            if(lowerTag.includes('social') || lowerTag.includes('instagram')) tagClass = 'social';
-
-            span.className = `tag ${tagClass}`;
-            span.innerText = tag;
+            span.className = 'tag normal';
+            
+            const text = document.createElement('span');
+            text.textContent = tag;
+            span.appendChild(text);
+            
+            // Remove button
+            const removeIcon = document.createElement('span');
+            removeIcon.className = 'material-icons remove-tag-icon';
+            removeIcon.textContent = 'close';
+            removeIcon.onclick = (e) => {
+                e.stopPropagation();
+                removeTag(tag);
+            };
+            
+            span.appendChild(removeIcon);
             tagsContainer.insertBefore(span, addBtn);
         });
     }
@@ -175,39 +209,65 @@ function renderTags(tagsString) {
 // Add New Tag
 async function addNewTag() {
     const newTag = prompt("Enter new tag:");
-    if (newTag) {
-        let updatedTags = currentData.tags ? `${currentData.tags}, ${newTag}` : newTag;
-        
-        const { error } = await supabase
-            .from('mind_links')
-            .update({ tags: updatedTags })
-            .eq('id', docId);
+    if (!newTag) return;
+    
+    const currentTags = currentData.tags ? currentData.tags.split(',').map(t => t.trim()) : [];
+    if (currentTags.includes(newTag)) return; // Prevent duplicates
+    
+    currentTags.push(newTag);
+    const updatedTags = currentTags.join(', ');
+    
+    await updateDatabase({ tags: updatedTags });
+    currentData.tags = updatedTags;
+    renderTags(updatedTags);
+}
 
-        if (!error) {
-            currentData.tags = updatedTags;
-            renderTags(updatedTags);
-        } else {
-            alert("Failed to add tag");
-        }
+// Remove Tag
+async function removeTag(tagToRemove) {
+    if (!confirm(`Remove tag "${tagToRemove}"?`)) return;
+    
+    const currentTags = currentData.tags.split(',').map(t => t.trim());
+    const newTags = currentTags.filter(t => t !== tagToRemove);
+    const updatedTags = newTags.join(', ');
+    
+    await updateDatabase({ tags: updatedTags });
+    currentData.tags = updatedTags;
+    renderTags(updatedTags);
+}
+
+// Update Title
+async function updateTitle(newTitle) {
+    if (newTitle === currentData.title) return;
+    await updateDatabase({ title: newTitle });
+    currentData.title = newTitle;
+}
+
+// Generic Database Update
+async function updateDatabase(updates) {
+    const { error } = await supabase
+        .from('mind_links')
+        .update(updates)
+        .eq('id', docId);
+    
+    if (error) {
+        console.error("Update failed:", error);
+        alert("Failed to save changes.");
     }
 }
 
-// Auto Save Note
+// Auto Save Note with Debounce
 const noteInput = document.getElementById('detail-note');
-noteInput.addEventListener('blur', async () => {
-    const newNote = noteInput.value;
+noteInput.addEventListener('input', () => {
+    clearTimeout(saveTimeout);
     
-    if (newNote !== currentData.note) {
-        const { error } = await supabase
-            .from('mind_links')
-            .update({ note: newNote })
-            .eq('id', docId);
-
-        if (!error) {
+    saveTimeout = setTimeout(async () => {
+        const newNote = noteInput.value;
+        if (newNote !== currentData.note) {
+            await updateDatabase({ note: newNote });
             currentData.note = newNote;
-            console.log("Note saved!");
+            console.log("Note auto-saved");
         }
-    }
+    }, 1000);
 });
 
 // Share Functionality

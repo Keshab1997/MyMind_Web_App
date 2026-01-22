@@ -1,8 +1,7 @@
 const SUPABASE_URL = 'https://cmrgloxlyovihqhdxdls.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNtcmdsb3hseW92aWhxaGR4ZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg3NDQ2MDEsImV4cCI6MjA4NDMyMDYwMX0.-boSPxeSV4Q_6lX7rcXauRrpAw--YA-MGAH_IknXa84';
-const IMGBB_API_KEY = "3f28730505fe4abf28c082d23f395a1b";
 
-let capturedImageUrl = "";
+let pageData = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
     const loginView = document.getElementById('login-view');
@@ -60,45 +59,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Screenshot
-    document.getElementById('screenshot-btn').onclick = () => {
-        const btn = document.getElementById('screenshot-btn');
-        btn.innerText = "⏳";
-        btn.disabled = true;
-
-        chrome.tabs.captureVisibleTab(null, {format: 'png'}, async (dataUrl) => {
-            showStatus("Uploading screenshot...", "orange");
-
-            const res = await fetch(dataUrl);
-            const blob = await res.blob();
-
-            const formData = new FormData();
-            formData.append("image", blob);
-
-            try {
-                const uploadReq = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                    method: "POST",
-                    body: formData
-                });
-                const result = await uploadReq.json();
-
-                if (result.success) {
-                    capturedImageUrl = result.data.url;
-                    showStatus("Screenshot attached! \u2713", "#2e7d32");
-                    btn.innerText = "✅";
-                    btn.style.background = "#C8E6C9";
-                } else {
-                    throw new Error("Upload failed");
-                }
-            } catch (e) {
-                console.error(e);
-                showStatus("Screenshot upload failed", "red");
-                btn.innerText = "📷";
-                btn.disabled = false;
-            }
-        });
-    };
-
     // Save
     document.getElementById('save-btn').onclick = async () => {
         const url = document.getElementById('url').value.trim();
@@ -114,28 +74,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             const saveBtn = document.getElementById('save-btn');
             saveBtn.disabled = true;
             saveBtn.innerText = "Saving...";
-            showStatus("Analyzing and saving...", "orange");
+            showStatus("Saving to your mind...", "orange");
 
             try {
-                let imageUrl = "";
-                let description = "";
+                // Use smart parsed data from content script
+                let imageUrl = pageData.image || "";
+                let description = pageData.description || "";
                 
-                try {
-                    const meta = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(url)}`).then(r => r.json());
-                    if (meta.status === 'success') {
-                        imageUrl = meta.data.image?.url || "";
-                        description = meta.data.description || "";
-                    }
-                } catch (e) {}
-
                 let autoTags = "Extension";
                 
                 if (document.getElementById('is-fav').checked) {
                     autoTags += ", Important, Favorite";
-                }
-                
-                if (capturedImageUrl) {
-                    autoTags += ", Screenshot";
                 }
                 
                 if (url.includes("youtube.com") || url.includes("youtu.be")) {
@@ -160,8 +109,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         url, 
                         title: title || "Untitled", 
                         note,
-                        image_url: capturedImageUrl || imageUrl,
-                        thumbnail_url: capturedImageUrl || imageUrl,
+                        image_url: imageUrl,
+                        thumbnail_url: imageUrl,
                         description,
                         user_id: session.user.id,
                         tags: autoTags
@@ -169,7 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
 
                 if (res.ok) {
-                    showStatus("\u2713 Saved successfully!", "#2e7d32");
+                    showStatus("✓ Saved successfully!", "#2e7d32");
                     loadRecents(session);
                     setTimeout(() => window.close(), 1500);
                 } else {
@@ -226,18 +175,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         loadRecents(session);
         
+        // Get page details using content script
         chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
             if (tabs[0]) {
-                document.getElementById('url').value = tabs[0].url || "";
-                document.getElementById('title').value = tabs[0].title || "";
+                const tabId = tabs[0].id;
                 
+                // Inject content script
                 chrome.scripting.executeScript({
-                    target: { tabId: tabs[0].id },
-                    function: () => window.getSelection().toString()
-                }, (results) => {
-                    if (results && results[0] && results[0].result) {
-                        document.getElementById('note').value = results[0].result;
-                    }
+                    target: { tabId: tabId },
+                    files: ['content.js']
+                }, () => {
+                    // Get page metadata
+                    chrome.tabs.sendMessage(tabId, { action: "getPageDetails" }, (response) => {
+                        if (response) {
+                            pageData = response;
+                            
+                            document.getElementById('url').value = response.url;
+                            document.getElementById('title').value = response.title;
+                            
+                            if (response.selection) {
+                                document.getElementById('note').value = response.selection;
+                            }
+                        }
+                    });
                 });
             }
         });

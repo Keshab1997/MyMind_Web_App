@@ -1,77 +1,76 @@
 const SUPABASE_URL = 'https://cmrgloxlyovihqhdxdls.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNtcmdsb3hseW92aWhxaGR4ZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg3NDQ2MDEsImV4cCI6MjA4NDMyMDYwMX0.-boSPxeSV4Q_6lX7rcXauRrpAw--YA-MGAH_IknXa84';
 
-// ইন্সটল হওয়ার পর মেনু তৈরি করা
+// Create context menus on install
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
-    id: "save-page",
-    title: "Save Page to My Mind",
-    contexts: ["page"]
-  });
-
-  chrome.contextMenus.create({
-    id: "save-image",
-    title: "Save Image to My Mind",
-    contexts: ["image"]
+    id: "save-to-mind",
+    title: "Save to My Mind",
+    contexts: ["selection", "image", "page"]
   });
 });
 
-// মেনুতে ক্লিক করলে যা হবে
+// Handle context menu clicks
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  
-  // সেশন চেক করা
   const storage = await chrome.storage.local.get(['session']);
-  const session = storage.session;
-
-  if (!session) {
-    showNotification("Please login first!", "Open the extension popup to login.");
+  
+  if (!storage.session) {
+    showNotification("Login Required", "Please open the extension popup to login.");
     return;
   }
 
-  let url = info.pageUrl;
-  let title = tab.title;
-  let imageUrl = "";
-  let tags = "Extension, Quick Save";
+  let payload = {
+    user_id: storage.session.user.id,
+    url: info.pageUrl,
+    title: tab.title,
+    tags: "Extension, Quick Save"
+  };
 
-  // যদি ছবির ওপর রাইট ক্লিক করা হয়
-  if (info.menuItemId === "save-image") {
-    url = info.srcUrl;
-    imageUrl = info.srcUrl;
-    title = "Saved Image";
-    tags += ", Image";
+  // Text Selection
+  if (info.selectionText) {
+    payload.note = info.selectionText;
+    payload.title = info.selectionText.substring(0, 30) + "...";
+    payload.tags += ", Note";
+  } 
+  // Image Save
+  else if (info.mediaType === "image") {
+    payload.url = info.srcUrl;
+    payload.image_url = info.srcUrl;
+    payload.thumbnail_url = info.srcUrl;
+    payload.title = "Saved Image";
+    payload.tags += ", Image";
+  }
+  // Page Save
+  else {
+    payload.tags += ", Link";
   }
 
-  // Supabase এ পাঠানো
+  saveToSupabase(payload, storage.session.access_token);
+});
+
+async function saveToSupabase(payload, token) {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/mind_links`, {
-        method: 'POST',
-        headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({
-            url: url,
-            title: title,
-            image_url: imageUrl,
-            thumbnail_url: imageUrl,
-            user_id: session.user.id,
-            tags: tags
-        })
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(payload)
     });
 
     if (res.ok) {
-      showNotification("Saved Successfully!", title);
+      showNotification("Saved!", "Successfully added to your mind.");
     } else {
-      showNotification("Failed to Save", "Please try again.");
+      showNotification("Error", "Failed to save. Please try again.");
     }
   } catch (error) {
-    showNotification("Error", error.message);
+    showNotification("Network Error", error.message);
   }
-});
+}
 
-// নোটিফিকেশন দেখানোর ফাংশন
 function showNotification(title, message) {
   chrome.notifications.create({
     type: 'basic',

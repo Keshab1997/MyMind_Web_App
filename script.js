@@ -25,6 +25,7 @@ const searchInput = document.getElementById('search-input');
 
 let selectedFiles = [];
 let allLinksData = [];
+let realtimeChannel = null;
 
 // সুন্দর লোডার দেখানোর ফাংশন
 function showLoader(message) {
@@ -57,7 +58,25 @@ window.onload = async () => {
     }
 
     fetchLinks();
+    setupRealtimeSubscription();
 };
+
+// Real-time Updates
+function setupRealtimeSubscription() {
+    if (realtimeChannel) return;
+    
+    realtimeChannel = supabase
+        .channel('mind_links_changes')
+        .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'mind_links' },
+            (payload) => {
+                console.log('Realtime:', payload);
+                fetchLinks();
+            }
+        )
+        .subscribe();
+}
 
 async function handleSharedContent() {
     try {
@@ -250,81 +269,106 @@ searchInput.addEventListener('input', (e) => {
     renderFeed(filteredData);
 });
 
+// Security: XSS Protection
+function escapeHTML(str) {
+    if (!str) return "";
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 // 3. কার্ড রেন্ডার ফাংশন
 function renderFeed(dataList) {
     feedContainer.innerHTML = ""; 
 
     if (dataList.length === 0) {
-        feedContainer.innerHTML = "<p style='text-align:center; color:#888; width:100%; margin-top:20px;'>No results found.</p>";
+        feedContainer.innerHTML = `<div class="empty-state"><span class="material-icons">inbox</span><p>No results found</p></div>`;
         return;
     }
 
     dataList.forEach(item => {
         const card = document.createElement('div');
         
-        // 🔥 Check if this is a note (no URL)
         const isNote = !item.url || item.url.trim() === "";
 
         if (isNote) {
-            // Note card design
             const colorIndex = (feedContainer.children.length % 4) + 1;
             card.className = `card note-card note-bg-${colorIndex}`;
-            card.innerHTML = `
-                <div class="note-body">
-                    <span class="material-icons note-badge">description</span>
-                    <div class="note-preview-text">${item.note || item.title}</div>
-                </div>
-                <div class="card-content" style="background: rgba(0,0,0,0.03)">
-                    <div class="card-title">${item.title}</div>
-                </div>
-            `;
+            
+            const noteBody = document.createElement('div');
+            noteBody.className = 'note-body';
+            noteBody.innerHTML = `<span class="material-icons note-badge">description</span>`;
+            
+            const noteText = document.createElement('div');
+            noteText.className = 'note-preview-text';
+            noteText.textContent = item.note || item.title;
+            noteBody.appendChild(noteText);
+            
+            const cardContent = document.createElement('div');
+            cardContent.className = 'card-content';
+            cardContent.style.background = 'rgba(0,0,0,0.03)';
+            
+            const cardTitle = document.createElement('div');
+            cardTitle.className = 'card-title';
+            cardTitle.textContent = item.title;
+            cardContent.appendChild(cardTitle);
+            
+            card.appendChild(noteBody);
+            card.appendChild(cardContent);
         } else {
-            // Regular link/image card
             card.className = 'card';
-        
-            // থাম্বনেইল লজিক: ডাটাবেসে ছবি থাকলে সেটা নিবে, না থাকলে ইউটিউব চেক করবে
             let imageUrl = item.thumbnail_url || item.image_url; 
             
-            // যদি ডাটাবেসে ছবি না থাকে (পুরানো লিংকের জন্য), তাহলে ম্যানুয়ালি চেক করবে
             if (!imageUrl) {
                 imageUrl = getYouTubeThumbnail(item.url);
             }
 
-            let imageHTML = '';
+            const cardHeader = document.createElement('div');
+            cardHeader.className = 'card-header';
 
             if (imageUrl) {
-                // ছবি পাওয়া গেলে
-                imageHTML = `<img src="${imageUrl}" class="thumb-img" alt="Thumbnail" loading="lazy" onload="this.classList.add('loaded'); this.parentElement.classList.add('loaded');" onerror="this.style.display='none'">`;
+                const img = document.createElement('img');
+                img.src = imageUrl;
+                img.className = 'thumb-img';
+                img.loading = 'lazy';
+                img.onerror = () => img.style.display = 'none';
+                cardHeader.appendChild(img);
             } else {
-                // ছবি না পাওয়া গেলে লোগো দেখাবে
                 let favicon = "";
                 try {
                     const domain = new URL(item.url).hostname;
                     favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
                 } catch (e) {
-                    favicon = "https://cdn-icons-png.flaticon.com/512/3062/3062634.png"; // Default icon
+                    favicon = "https://cdn-icons-png.flaticon.com/512/3062/3062634.png";
                 }
                 
-                setTimeout(() => {
-                    const header = card.querySelector('.card-header');
-                    if(header) header.classList.add('loaded');
-                }, 100);
+                const placeholder = document.createElement('div');
+                placeholder.className = 'card-placeholder';
+                placeholder.style.backgroundColor = getRandomColor();
                 
-                imageHTML = `
-                    <div class="card-placeholder" style="background-color: ${getRandomColor()}">
-                        <img src="${favicon}" class="favicon-img" alt="Icon">
-                    </div>`;
+                const faviconImg = document.createElement('img');
+                faviconImg.src = favicon;
+                faviconImg.className = 'favicon-img';
+                placeholder.appendChild(faviconImg);
+                cardHeader.appendChild(placeholder);
             }
 
-            card.innerHTML = `
-                <div class="card-header">
-                    ${imageHTML}
-                </div>
-                <div class="card-content">
-                    <div class="card-title">${item.title}</div>
-                    <div class="card-link">${item.url}</div>
-                </div>
-            `;
+            const cardContent = document.createElement('div');
+            cardContent.className = 'card-content';
+            
+            const cardTitle = document.createElement('div');
+            cardTitle.className = 'card-title';
+            cardTitle.textContent = item.title;
+            
+            const cardLink = document.createElement('div');
+            cardLink.className = 'card-link';
+            cardLink.textContent = item.url;
+            
+            cardContent.appendChild(cardTitle);
+            cardContent.appendChild(cardLink);
+            
+            card.appendChild(cardHeader);
+            card.appendChild(cardContent);
         }
         
         card.onclick = () => window.location.href = `./detail_screen/detail.html?id=${item.id}`;

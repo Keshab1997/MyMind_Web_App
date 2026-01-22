@@ -89,11 +89,11 @@ body {
     flex: 1; 
     border: none; 
     outline: none; 
-    font-size: 20px; 
+    font-size: 18px; 
     line-height: 1.6; 
     resize: none;
-    font-family: 'Georgia', serif; 
-    color: #222;
+    font-family: 'Inter', sans-serif;
+    color: #333;
     padding: 10px 0;
 }
 
@@ -106,16 +106,17 @@ body {
     padding: 20px 0; 
     border-top: 1px solid #eee; 
     display: flex; 
-    gap: 30px; 
+    justify-content: space-around;
     color: #666; 
     align-items: center;
+    background: white;
 }
 
 .keyboard-bar span { 
     cursor: pointer; 
     transition: all 0.2s;
-    padding: 8px;
-    border-radius: 8px;
+    padding: 10px;
+    border-radius: 50%;
 }
 
 .keyboard-bar span:hover { 
@@ -127,9 +128,14 @@ body {
     transform: scale(0.9);
 }
 
-#btn-spellcheck:hover {
-    color: #4CAF50;
-    background: rgba(76, 175, 80, 0.1);
+/* Mic Button */
+#btn-mic {
+    transition: color 0.2s;
+}
+
+#btn-mic:hover {
+    color: #EF4444;
+    background: rgba(239, 68, 68, 0.1);
 }
 
 /* Desktop adjustments */

@@ -1,12 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "My Mind Saver",
-  "version": "1.4",
-  "description": "Save links directly to your My Mind feed with Auth.",
-  "permissions": ["activeTab", "storage", "scripting", "contextMenus", "notifications", "<all_urls>"],
+  "name": "My Mind - Smart Saver",
+  "version": "2.0",
+  "description": "Save websites, images, and notes directly to your second brain.",
+  "permissions": ["activeTab", "storage", "scripting", "contextMenus", "notifications"],
   "host_permissions": [
-    "https://cmrgloxlyovihqhdxdls.supabase.co/*",
-    "https://api.microlink.io/*"
+    "https://cmrgloxlyovihqhdxdls.supabase.co/*"
   ],
   "background": {
     "service_worker": "background.js"
