@@ -281,7 +281,8 @@ header {
     width: 100%; 
     height: auto; 
     display: block; 
-    object-fit: cover; 
+    object-fit: cover;
+    content-visibility: auto;
 }
 
 .card-placeholder { 

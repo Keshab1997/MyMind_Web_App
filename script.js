@@ -141,7 +141,6 @@ function setupRealtimeSubscription() {
             'postgres_changes',
             { event: '*', schema: 'public', table: 'mind_links' },
             (payload) => {
-                console.log('Realtime:', payload);
                 fetchLinks();
             }
         )
@@ -308,16 +307,16 @@ async function fetchLinks() {
     const { data, error } = await supabase
         .from('mind_links')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50);
 
     if (error) {
-        console.error("Error fetching:", error);
         feedContainer.innerHTML = "<p>Error loading data.</p>";
         return;
     }
 
     allLinksData = data;
-    renderFeed(allLinksData);
+    requestIdleCallback(() => renderFeed(allLinksData));
 }
 
 // 2. সার্চ ফাংশন
@@ -401,6 +400,7 @@ function renderFeed(dataList) {
                 img.src = imageUrl;
                 img.className = 'thumb-img';
                 img.loading = 'lazy';
+                img.decoding = 'async';
                 img.onerror = () => img.style.display = 'none';
                 cardHeader.appendChild(img);
             } else {
@@ -487,9 +487,7 @@ function getYouTubeThumbnail(url) {
         if (ytMatch && ytMatch[1]) {
             return `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
         }
-    } catch(e) {
-        console.warn('Error parsing YouTube URL:', e);
-    }
+    } catch(e) {}
     return null;
 }
 
@@ -600,7 +598,7 @@ saveBtn.onclick = async () => {
                     if (meta.data.description) finalDesc = meta.data.description;
                     if (!title && meta.data.title) title = meta.data.title;
                 }
-            } catch (e) { console.log("Meta fetch error"); }
+            } catch (e) {}
 
             saveBtn.innerText = "Saving...";
             
@@ -624,7 +622,6 @@ saveBtn.onclick = async () => {
 
     } catch (error) {
         alert("Error: " + error.message);
-        console.error(error);
     } finally {
         saveBtn.innerText = "Save";
         saveBtn.disabled = false;

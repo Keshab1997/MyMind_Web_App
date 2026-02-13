@@ -62,12 +62,18 @@ async function saveToSupabase(payload, token) {
     });
 
     if (res.ok) {
-      showNotification("Saved!", "Successfully added to your mind.");
+      showNotification("✓ Saved!", `${payload.title || 'Item'} added to your mind`);
+      
+      // Open app in new tab to show saved item
+      chrome.tabs.create({ 
+        url: 'https://keshab1997.github.io/MyMind_Web_App/',
+        active: false 
+      });
     } else {
-      showNotification("Error", "Failed to save. Please try again.");
+      showNotification("❌ Save Failed", "Please try again or use the popup");
     }
   } catch (error) {
-    showNotification("Network Error", error.message);
+    showNotification("❌ Network Error", "Check your connection and try again");
   }
 }
 
@@ -76,6 +82,7 @@ function showNotification(title, message) {
     type: 'basic',
     iconUrl: 'icon.png',
     title: title,
-    message: message
+    message: message,
+    priority: 2
   });
 }
