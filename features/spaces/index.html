@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spaces - My Mind</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="../dark_mode/dark_mode.css">
+</head>
+<body>
+    <header>
+        <button id="back-btn" class="header-icon-btn">
+            <span class="material-icons">arrow_back</span>
+        </button>
+        <h2 id="space-title">Spaces</h2>
+        <button id="add-space-btn" class="header-icon-btn">
+            <span class="material-icons">create_new_folder</span>
+        </button>
+    </header>
+
+    <div id="breadcrumb"></div>
+
+    <main id="spaces-container">
+        <div class="loading">Loading spaces...</div>
+    </main>
+
+    <nav class="bottom-nav">
+        <div class="nav-item" onclick="window.location.href='../../index.html'"><span class="material-icons">dashboard</span><span>Everything</span></div>
+        <div class="nav-item" onclick="window.location.href='../quick_note/index.html'"><span class="material-icons">edit_note</span><span>Note</span></div>
+        <div class="nav-item active"><span class="material-icons">circle</span><span>Spaces</span></div>
+        <div class="nav-item" onclick="window.location.href='../../profile_screen/profile.html'"><span class="material-icons">person</span><span>Profile</span></div>
+    </nav>
+
+    <div id="add-space-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 id="modal-title">Create Space</h3>
+            <input type="text" id="space-name-input" placeholder="Space name">
+            <div class="modal-actions">
+                <button id="cancel-space-btn">Cancel</button>
+                <button id="save-space-btn" class="primary">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./script.js"></script>
+    <script defer src="../dark_mode/dark_mode.js"></script>
+</body>
+</html>

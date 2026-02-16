@@ -262,6 +262,8 @@ header {
     cursor: pointer; 
     transition: var(--transition);
     border: 1px solid rgba(0,0,0,0.02);
+    content-visibility: auto;
+    contain-intrinsic-size: 250px;
 }
 
 .card:hover { 

@@ -304,3 +304,30 @@ document.getElementById('delete-btn').onclick = async () => {
         window.location.href = "../home_screen/home.html";
     }
 };
+
+// Move to Space
+document.getElementById('move-to-space-btn').onclick = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: spaces } = await supabase.from('spaces').select('id, name').eq('user_id', user.id).order('name');
+    
+    if (!spaces || spaces.length === 0) {
+        alert('No spaces found. Create one first!');
+        return;
+    }
+    
+    let options = 'None (Remove from space)\n';
+    spaces.forEach((s, i) => options += `${i + 1}. ${s.name}\n`);
+    
+    const choice = prompt(`Move to Space:\n\n${options}\nEnter number (or 0 for None):`);
+    if (choice === null) return;
+    
+    const index = parseInt(choice);
+    if (isNaN(index) || index < 0 || index > spaces.length) {
+        alert('Invalid choice');
+        return;
+    }
+    
+    const spaceId = index === 0 ? null : spaces[index - 1].id;
+    await updateDatabase({ space_id: spaceId });
+    alert(spaceId ? 'Moved to space!' : 'Removed from space!');
+};

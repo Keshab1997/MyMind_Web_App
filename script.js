@@ -28,6 +28,10 @@ let allLinksData = [];
 let realtimeChannel = null;
 let selectedIds = [];
 let isSelectMode = false;
+let offset = 0;
+const LIMIT = 30;
+let isFetching = false;
+let hasMore = true;
 
 // সুন্দর লোডার দেখানোর ফাংশন
 function showLoader(message) {
@@ -62,7 +66,22 @@ window.onload = async () => {
     fetchLinks();
     setupRealtimeSubscription();
     setupSelectionMode();
+    setupInfiniteScroll();
 };
+
+// Infinite Scroll Setup
+function setupInfiniteScroll() {
+    window.addEventListener('scroll', () => {
+        if (isFetching || !hasMore) return;
+        
+        const scrollPosition = window.innerHeight + window.scrollY;
+        const threshold = document.body.offsetHeight - 800;
+        
+        if (scrollPosition >= threshold) {
+            fetchLinks(true);
+        }
+    });
+}
 
 // Selection Mode Setup
 function setupSelectionMode() {
@@ -301,22 +320,40 @@ clearImgsBtn.onclick = () => {
 };
 
 // 1. ডাটা লোড করা
-async function fetchLinks() {
-    showLoader("Loading your mind");
+async function fetchLinks(isLoadMore = false) {
+    if (isFetching) return;
+    isFetching = true;
+
+    if (!isLoadMore) {
+        offset = 0;
+        hasMore = true;
+        showLoader("Loading your mind");
+    }
 
     const { data, error } = await supabase
         .from('mind_links')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(50);
+        .range(offset, offset + LIMIT - 1);
 
     if (error) {
         feedContainer.innerHTML = "<p>Error loading data.</p>";
+        isFetching = false;
         return;
     }
 
-    allLinksData = data;
-    requestIdleCallback(() => renderFeed(allLinksData));
+    if (data.length < LIMIT) hasMore = false;
+
+    if (isLoadMore) {
+        allLinksData = [...allLinksData, ...data];
+        requestIdleCallback(() => renderFeed(data, true));
+    } else {
+        allLinksData = data;
+        requestIdleCallback(() => renderFeed(data, false));
+    }
+
+    offset += data.length;
+    isFetching = false;
 }
 
 // 2. সার্চ ফাংশন
@@ -347,10 +384,10 @@ function escapeHTML(str) {
 }
 
 // 3. কার্ড রেন্ডার ফাংশন
-function renderFeed(dataList) {
-    feedContainer.innerHTML = ""; 
+function renderFeed(dataList, isAppend = false) {
+    if (!isAppend) feedContainer.innerHTML = ""; 
 
-    if (dataList.length === 0) {
+    if (dataList.length === 0 && !isAppend) {
         feedContainer.innerHTML = `<div class="empty-state"><span class="material-icons">inbox</span><p>No results found</p></div>`;
         return;
     }

@@ -9,14 +9,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     const saveView = document.getElementById('save-view');
     const statusDiv = document.getElementById('status');
 
-    // Check session
-    chrome.storage.local.get(['session'], (result) => {
+    // Check and refresh session if needed
+    chrome.storage.local.get(['session'], async (result) => {
         if (result.session) {
-            showSaveView(result.session);
+            const session = result.session;
+            const expiresAt = session.expires_at;
+            const currentTime = Math.floor(Date.now() / 1000);
+
+            if (expiresAt && (expiresAt - currentTime < 300)) {
+                await refreshSession(session.refresh_token);
+            } else {
+                showSaveView(session);
+            }
         } else {
             showLoginView();
         }
     });
+
+    async function refreshSession(refreshToken) {
+        if (!refreshToken) {
+            showLoginView();
+            return;
+        }
+
+        try {
+            const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+                method: 'POST',
+                headers: { 
+                    'apikey': SUPABASE_KEY, 
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify({ refresh_token: refreshToken })
+            });
+            
+            const data = await res.json();
+            if (res.ok && data.access_token) {
+                chrome.storage.local.set({ session: data }, () => {
+                    showSaveView(data);
+                });
+            } else {
+                showLoginView();
+            }
+        } catch (e) {
+            showLoginView();
+        }
+    }
 
     // Login
     document.getElementById('do-login-btn').onclick = async () => {
