@@ -8,7 +8,7 @@
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3062/3062634.png">
     <link rel="stylesheet" href="detail.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lato:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../features/dark_mode/dark_mode.css">
     <script defer src="../features/dark_mode/dark_mode.js"></script>
 </head>
@@ -16,20 +16,26 @@
 
     <!-- Header -->
     <header>
-        <button class="icon-btn" onclick="history.back()">
-            <span class="material-icons">keyboard_arrow_down</span>
-        </button>
-        <span id="header-title">Loading...</span>
-        <button class="icon-btn">
-            <span class="material-icons">more_horiz</span>
-        </button>
+        <div class="header-left">
+            <button class="icon-btn back-btn" onclick="history.back()" aria-label="Go back">
+                <span class="material-icons">keyboard_arrow_down</span>
+            </button>
+        </div>
+        <span id="header-title" class="header-title">Loading...</span>
+        <div class="header-right">
+            <button class="icon-btn more-btn" aria-label="More options">
+                <span class="material-icons">more_horiz</span>
+            </button>
+        </div>
     </header>
 
     <main class="content-area">
         
         <!-- Hero Card -->
         <div class="hero-card" id="hero-container">
-            <div class="loading-spinner"></div>
+            <div class="loading-shimmer">
+                <div class="shimmer-spinner"></div>
+            </div>
         </div>
 
         <!-- Right Side: All Info -->
@@ -37,14 +43,17 @@
             <!-- Watched Button -->
             <div class="action-row">
                 <button class="watched-btn" id="visit-btn">
-                    <span class="material-icons" style="font-size: 18px; color: #9FA8DA;">check</span>
+                    <span class="material-icons" style="font-size: 20px;">check_circle</span>
                     <span>I've watched this video</span>
                 </button>
             </div>
 
             <!-- Description Box -->
             <div class="section" id="desc-section" style="display: none;">
-                <p class="section-label">ABOUT THIS LINK</p>
+                <div class="section-header">
+                    <span class="section-icon">📄</span>
+                    <p class="section-label">ABOUT THIS LINK</p>
+                </div>
                 <div class="description-box">
                     <p id="full-description">...</p>
                 </div>
@@ -52,7 +61,10 @@
 
             <!-- Tags Section -->
             <div class="section">
-                <p class="section-label">MIND TAGS</p>
+                <div class="section-header">
+                    <span class="section-icon">🏷️</span>
+                    <p class="section-label">MIND TAGS</p>
+                </div>
                 <div class="tags-wrapper" id="tags-container">
                     <span class="tag add-tag">+ Add tag</span>
                 </div>
@@ -60,9 +72,15 @@
 
             <!-- Notes Section -->
             <div class="section">
-                <p class="section-label">MIND NOTES</p>
+                <div class="section-header">
+                    <span class="section-icon">📝</span>
+                    <p class="section-label">MIND NOTES</p>
+                </div>
                 <div class="note-box">
-                    <textarea id="detail-note" class="note-input" placeholder="Type here to add a note..."></textarea>
+                    <textarea id="detail-note" class="note-input" placeholder="Type here to add a note..." spellcheck="false"></textarea>
+                    <div class="note-actions">
+                        <span class="note-char-count">0/500</span>
+                    </div>
                 </div>
             </div>
         </div>
