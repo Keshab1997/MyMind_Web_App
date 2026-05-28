@@ -368,26 +368,45 @@ document.getElementById('delete-btn').onclick = async () => {
 // Move to Space
 document.getElementById('move-to-space-btn').onclick = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    const { data: spaces } = await supabase.from('spaces').select('id, name').eq('user_id', user.id).order('name');
+    const { data: spaces } = await supabase.from('spaces').select('*').eq('user_id', user.id);
     
     if (!spaces || spaces.length === 0) {
         alert('No spaces found. Create one first!');
         return;
     }
     
+    // Build a map of spaces to resolve paths
+    const spaceMap = new Map();
+    spaces.forEach(s => spaceMap.set(s.id, s));
+    
+    function getFullPath(space) {
+        let path = space.name;
+        let current = space;
+        while (current.parent_id && spaceMap.has(current.parent_id)) {
+            current = spaceMap.get(current.parent_id);
+            path = current.name + ' / ' + path;
+        }
+        return path;
+    }
+    
+    const sortedSpaces = spaces.map(s => ({
+        ...s,
+        fullPath: getFullPath(s)
+    })).sort((a, b) => a.fullPath.localeCompare(b.fullPath));
+    
     let options = 'None (Remove from space)\n';
-    spaces.forEach((s, i) => options += `${i + 1}. ${s.name}\n`);
+    sortedSpaces.forEach((s, i) => options += `${i + 1}. ${s.fullPath}\n`);
     
     const choice = prompt(`Move to Space:\n\n${options}\nEnter number (or 0 for None):`);
     if (choice === null) return;
     
     const index = parseInt(choice);
-    if (isNaN(index) || index < 0 || index > spaces.length) {
+    if (isNaN(index) || index < 0 || index > sortedSpaces.length) {
         alert('Invalid choice');
         return;
     }
     
-    const spaceId = index === 0 ? null : spaces[index - 1].id;
+    const spaceId = index === 0 ? null : sortedSpaces[index - 1].id;
     await updateDatabase({ space_id: spaceId });
     alert(spaceId ? 'Moved to space!' : 'Removed from space!');
 };
