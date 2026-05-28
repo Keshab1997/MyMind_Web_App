@@ -369,7 +369,7 @@ let realtimeRefreshQueued = false;
 let realtimeRefreshInProgress = false;
 
 function scheduleRealtimeRefresh(_payload) {
-    // If we’re currently fetching, queue exactly one refresh.
+    // If we're currently fetching, queue exactly one refresh.
     if (isFetching || realtimeRefreshInProgress) {
         realtimeRefreshQueued = true;
         if (!realtimeRefreshTimer) {
@@ -796,8 +796,19 @@ function renderFeed(dataList, isAppend = false) {
             cardLink.className = 'card-link';
             cardLink.textContent = item.url;
             
+            // Copy button for the link
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-link-btn';
+            copyBtn.innerHTML = '<span class="material-icons">content_copy</span>';
+            copyBtn.title = 'Copy link';
+            copyBtn.onclick = (e) => {
+                e.stopPropagation();
+                copyLinkToClipboard(item.url, copyBtn);
+            };
+            
             cardContent.appendChild(cardTitle);
             cardContent.appendChild(cardLink);
+            cardContent.appendChild(copyBtn);
 
             if (createdAtText) {
                 const dateEl = document.createElement('div');
@@ -1065,6 +1076,42 @@ saveBtn.onclick = async () => {
         saveBtn.disabled = false;
     }
 };
+
+// --- Helper: Copy link to clipboard with visual feedback ---
+async function copyLinkToClipboard(url, element) {
+    try {
+        await navigator.clipboard.writeText(url);
+        
+        // Visual feedback - show tooltip with URL
+        if (element) {
+            element.classList.add('copied');
+            element.setAttribute('data-copied-text', 'Copied!');
+            setTimeout(() => {
+                element.classList.remove('copied');
+            }, 2000);
+        }
+        
+        // Show notification if available
+        showNotification('Copied!', 'Link copied to clipboard');
+    } catch (err) {
+        console.error('Failed to copy: ', err);
+        // Fallback: select and copy manually
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        
+        if (element) {
+            element.classList.add('copied');
+            element.setAttribute('data-copied-text', 'Copied!');
+            setTimeout(() => {
+                element.classList.remove('copied');
+            }, 2000);
+        }
+    }
+}
 
 function getRandomColor() {
     const colors = ['#F8BBD0', '#E1BEE7', '#FFCCBC', '#C5CAE9', '#B2DFDB'];
