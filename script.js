@@ -411,11 +411,13 @@ searchInput.addEventListener('input', (e) => {
         const note = item.note ? item.note.toLowerCase() : "";
         const tags = item.tags ? item.tags.toLowerCase() : "";
         const desc = item.description ? item.description.toLowerCase() : "";
+        const dateTokens = getDateSearchTokens(getCreatedAtValue(item));
 
         return title.includes(searchText) || 
                note.includes(searchText) || 
                tags.includes(searchText) || 
-               desc.includes(searchText);
+               desc.includes(searchText) ||
+               dateTokens.includes(searchText);
     });
 
     renderFeed(filteredData);
@@ -427,6 +429,54 @@ function escapeHTML(str) {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+}
+
+function getCreatedAtValue(item) {
+    if (!item) return null;
+    return (
+        item.created_at ??
+        item.createdAt ??
+        item.created ??
+        item.inserted_at ??
+        item.insertedAt ??
+        null
+    );
+}
+
+function formatCardDate(createdAt) {
+    if (!createdAt) return "";
+    const d = new Date(createdAt);
+    if (Number.isNaN(d.getTime())) return "";
+    // Example: "28 May 2026"
+    return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function getDateSearchTokens(createdAt) {
+    if (!createdAt) return "";
+    const d = new Date(createdAt);
+    if (Number.isNaN(d.getTime())) return "";
+    const iso = d.toISOString().slice(0, 10); // YYYY-MM-DD
+    const human = formatCardDate(createdAt); // "28 May 2026"
+    const locale = d.toLocaleDateString(); // device locale e.g. "5/28/2026"
+    return `${iso} ${human} ${locale}`.toLowerCase();
+}
+
+function shouldSkipRemoteImage(url) {
+    if (!url) return true;
+    try {
+        const u = new URL(url);
+        const host = u.hostname.toLowerCase();
+        // Instagram/Facebook CDNs often return 403 for hotlinking.
+        if (host.includes('cdninstagram.com') || host.includes('fbcdn.net') || host.includes('instagram.com')) {
+            return true;
+        }
+        const path = u.pathname.toLowerCase();
+        // HEIC/HEIF isn't widely supported in browsers and frequently fails.
+        if (path.endsWith('.heic') || path.endsWith('.heif')) return true;
+        return false;
+    } catch {
+        return true;
+    }
 }
 
 // 3. কার্ড রেন্ডার ফাংশন
@@ -442,6 +492,7 @@ function renderFeed(dataList, isAppend = false) {
         const card = document.createElement('div');
         
         const isNote = !item.url || item.url.trim() === "";
+        const createdAtText = formatCardDate(getCreatedAtValue(item));
 
         if (isNote) {
             const colorIndex = (feedContainer.children.length % 4) + 1;
@@ -464,6 +515,13 @@ function renderFeed(dataList, isAppend = false) {
             cardTitle.className = 'card-title';
             cardTitle.textContent = item.title;
             cardContent.appendChild(cardTitle);
+
+            if (createdAtText) {
+                const dateEl = document.createElement('div');
+                dateEl.className = 'card-date';
+                dateEl.textContent = createdAtText;
+                cardContent.appendChild(dateEl);
+            }
             
             card.appendChild(noteBody);
             card.appendChild(cardContent);
@@ -473,6 +531,9 @@ function renderFeed(dataList, isAppend = false) {
             
             if (!imageUrl) {
                 imageUrl = getYouTubeThumbnail(item.url);
+            }
+            if (imageUrl && shouldSkipRemoteImage(imageUrl)) {
+                imageUrl = null;
             }
 
             const cardHeader = document.createElement('div');
@@ -484,6 +545,7 @@ function renderFeed(dataList, isAppend = false) {
                 img.className = 'thumb-img';
                 img.loading = 'lazy';
                 img.decoding = 'async';
+                img.referrerPolicy = 'no-referrer';
                 img.onerror = () => img.style.display = 'none';
                 cardHeader.appendChild(img);
             } else {
@@ -502,6 +564,7 @@ function renderFeed(dataList, isAppend = false) {
                 const faviconImg = document.createElement('img');
                 faviconImg.src = favicon;
                 faviconImg.className = 'favicon-img';
+                faviconImg.referrerPolicy = 'no-referrer';
                 placeholder.appendChild(faviconImg);
                 cardHeader.appendChild(placeholder);
             }
@@ -519,6 +582,13 @@ function renderFeed(dataList, isAppend = false) {
             
             cardContent.appendChild(cardTitle);
             cardContent.appendChild(cardLink);
+
+            if (createdAtText) {
+                const dateEl = document.createElement('div');
+                dateEl.className = 'card-date';
+                dateEl.textContent = createdAtText;
+                cardContent.appendChild(dateEl);
+            }
             
             card.appendChild(cardHeader);
             card.appendChild(cardContent);

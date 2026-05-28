@@ -87,6 +87,8 @@ async function loadDetail() {
 
             // 2. Hero Card Logic
             const youtubeId = getYouTubeId(data.url);
+            const instagramEmbedUrl = getInstagramEmbedUrl(data.url);
+            const facebookEmbedUrl = getFacebookEmbedUrl(data.url);
         
             let hostname = "Link";
             try {
@@ -112,14 +114,37 @@ async function loadDetail() {
             cardText.appendChild(hostP);
 
             if (youtubeId) {
+                visitBtn.innerHTML = `<span class="material-icons">play_circle</span> Play video`;
                 const iframe = document.createElement('iframe');
-                iframe.width = '100%';
-                iframe.height = '100%';
-                iframe.src = `https://www.youtube.com/embed/${youtubeId}?controls=0`;
-                iframe.frameBorder = '0';
+                iframe.className = 'embed-frame';
+                iframe.src = `https://www.youtube.com/embed/${youtubeId}?autoplay=0&controls=1&modestbranding=1&rel=0`;
+                iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
                 iframe.allowFullscreen = true;
                 iframe.style.borderRadius = '24px';
                 heroContainer.appendChild(iframe);
+            } else if (instagramEmbedUrl) {
+                visitBtn.innerHTML = `<span class="material-icons">open_in_new</span> Open Instagram`;
+                const iframe = document.createElement('iframe');
+                iframe.className = 'embed-frame';
+                iframe.src = instagramEmbedUrl;
+                iframe.loading = 'lazy';
+                iframe.referrerPolicy = 'no-referrer';
+                iframe.allowFullscreen = true;
+                // Instagram embeds often need scripts/cookies and may fail; fallback remains "Open".
+                heroContainer.appendChild(iframe);
+                heroContainer.appendChild(gradientOverlay);
+                heroContainer.appendChild(cardText);
+            } else if (facebookEmbedUrl) {
+                visitBtn.innerHTML = `<span class="material-icons">open_in_new</span> Open Facebook`;
+                const iframe = document.createElement('iframe');
+                iframe.className = 'embed-frame';
+                iframe.src = facebookEmbedUrl;
+                iframe.loading = 'lazy';
+                iframe.referrerPolicy = 'no-referrer';
+                iframe.allowFullscreen = true;
+                heroContainer.appendChild(iframe);
+                heroContainer.appendChild(gradientOverlay);
+                heroContainer.appendChild(cardText);
             } else if (data.image_url) {
                 const img = document.createElement('img');
                 img.src = data.image_url;
@@ -294,6 +319,41 @@ function getYouTubeId(url) {
         const match = url.match(regExp);
         return (match && match[2].length === 11) ? match[2] : null;
     } catch(e) {
+        return null;
+    }
+}
+
+function getInstagramEmbedUrl(rawUrl) {
+    try {
+        const u = new URL(rawUrl);
+        const host = u.hostname.toLowerCase();
+        if (!host.includes('instagram.com')) return null;
+
+        // Supports: /p/{shortcode}/ , /reel/{shortcode}/ , /tv/{shortcode}/
+        const parts = u.pathname.split('/').filter(Boolean);
+        if (parts.length < 2) return null;
+        const type = parts[0];
+        const shortcode = parts[1];
+        if (!shortcode) return null;
+        if (!['p', 'reel', 'tv'].includes(type)) return null;
+
+        // Public embed URL.
+        return `https://www.instagram.com/${type}/${shortcode}/embed/`;
+    } catch {
+        return null;
+    }
+}
+
+function getFacebookEmbedUrl(rawUrl) {
+    try {
+        const u = new URL(rawUrl);
+        const host = u.hostname.toLowerCase();
+        if (!(host.includes('facebook.com') || host.includes('fb.watch'))) return null;
+
+        // Facebook official embed plugin. Works only if the content is embeddable/public.
+        const href = encodeURIComponent(rawUrl);
+        return `https://www.facebook.com/plugins/video.php?href=${href}&show_text=false&width=560`;
+    } catch {
         return null;
     }
 }

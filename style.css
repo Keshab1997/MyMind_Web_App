@@ -322,6 +322,13 @@ header {
     white-space: nowrap; 
 }
 
+.card-date {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+    opacity: 0.9;
+}
+
 /* Note Cards */
 .card.note-card { border: none; }
 
