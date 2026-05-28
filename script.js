@@ -68,6 +68,7 @@ window.onload = async () => {
     setupRealtimeSubscription();
     setupSelectionMode();
     setupInfiniteScroll();
+    loadSpacesForDropdown();
 };
 
 // Infinite Scroll Setup
@@ -81,6 +82,52 @@ function setupInfiniteScroll() {
         if (scrollPosition >= threshold) {
             fetchLinks(true);
         }
+    });
+}
+
+// Load spaces for dropdown
+async function loadSpacesForDropdown() {
+    const dropdown = document.getElementById('space-select-dropdown');
+    if (!dropdown) return;
+    
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) return;
+    
+    const { data: spaces, error } = await supabase
+        .from('spaces')
+        .select('*')
+        .eq('user_id', user.id);
+        
+    if (error || !spaces) return;
+    
+    // Build a map of spaces
+    const spaceMap = new Map();
+    spaces.forEach(s => spaceMap.set(s.id, s));
+    
+    // Helper to get full path
+    function getFullPath(space) {
+        let path = space.name;
+        let current = space;
+        while (current.parent_id && spaceMap.has(current.parent_id)) {
+            current = spaceMap.get(current.parent_id);
+            path = current.name + ' / ' + path;
+        }
+        return path;
+    }
+    
+    // Sort alphabetically by full path
+    const sortedSpaces = spaces.map(s => ({
+        ...s,
+        fullPath: getFullPath(s)
+    })).sort((a, b) => a.fullPath.localeCompare(b.fullPath));
+    
+    // Populate dropdown
+    dropdown.innerHTML = '<option value="">Auto Sort (Smart Space)</option>';
+    sortedSpaces.forEach(s => {
+        const option = document.createElement('option');
+        option.value = s.id;
+        option.textContent = s.fullPath;
+        dropdown.appendChild(option);
     });
 }
 
@@ -711,16 +758,27 @@ saveBtn.onclick = async () => {
                 const result = await response.json();
 
                 if (result.success) {
+                    const dropdown = document.getElementById('space-select-dropdown');
+                    const selectedSpaceId = dropdown ? dropdown.value : "";
+                    
+                    let itemData = { 
+                        url: result.data.url, 
+                        title: title || `My Photo ${i + 1}`, 
+                        note: note,
+                        image_url: result.data.url,
+                        thumbnail_url: result.data.thumb.url,
+                        tags: "Image, Upload, Gallery"
+                    };
+                    
+                    if (selectedSpaceId) {
+                        itemData.space_id = selectedSpaceId;
+                    } else {
+                        itemData = await withSmartSpace(supabase, itemData, { type: 'gallery' });
+                    }
+
                     const { error } = await supabase
                         .from('mind_links')
-                        .insert(await withSmartSpace(supabase, { 
-                            url: result.data.url, 
-                            title: title || `My Photo ${i + 1}`, 
-                            note: note,
-                            image_url: result.data.url,
-                            thumbnail_url: result.data.thumb.url,
-                            tags: "Image, Upload, Gallery"
-                        }, { type: 'gallery' }));
+                        .insert(itemData);
                     
                     if (!error) successCount++;
                 }
@@ -760,17 +818,28 @@ saveBtn.onclick = async () => {
 
             saveBtn.innerText = "Saving...";
             
+            const dropdown = document.getElementById('space-select-dropdown');
+            const selectedSpaceId = dropdown ? dropdown.value : "";
+            
+            let itemData = { 
+                url: url, 
+                title: title || "Untitled", 
+                note: note,
+                image_url: finalImage,
+                thumbnail_url: finalThumb,
+                description: finalDesc,
+                tags: finalTags
+            };
+            
+            if (selectedSpaceId) {
+                itemData.space_id = selectedSpaceId;
+            } else {
+                itemData = await withSmartSpace(supabase, itemData, { url });
+            }
+
             const { error } = await supabase
                 .from('mind_links')
-                .insert(await withSmartSpace(supabase, { 
-                    url: url, 
-                    title: title || "Untitled", 
-                    note: note,
-                    image_url: finalImage,
-                    thumbnail_url: finalThumb,
-                    description: finalDesc,
-                    tags: finalTags
-                }, { url }));
+                .insert(itemData);
 
             if (error) throw error;
 
