@@ -160,10 +160,56 @@ function setupRealtimeSubscription() {
             'postgres_changes',
             { event: '*', schema: 'public', table: 'mind_links' },
             (payload) => {
-                fetchLinks();
+                // Debounce bursty realtime events to avoid spamming fetchLinks().
+                // If a fetch is already in-flight, queue a single refresh.
+                scheduleRealtimeRefresh(payload);
             }
         )
         .subscribe();
+}
+
+let realtimeRefreshTimer = null;
+let realtimeRefreshQueued = false;
+let realtimeRefreshInProgress = false;
+
+function scheduleRealtimeRefresh(_payload) {
+    // If we’re currently fetching, queue exactly one refresh.
+    if (isFetching || realtimeRefreshInProgress) {
+        realtimeRefreshQueued = true;
+        if (!realtimeRefreshTimer) {
+            realtimeRefreshTimer = setTimeout(runRealtimeRefresh, 500);
+        }
+        return;
+    }
+
+    // Debounce: reset timer on each event, then refresh once.
+    if (realtimeRefreshTimer) clearTimeout(realtimeRefreshTimer);
+    realtimeRefreshTimer = setTimeout(runRealtimeRefresh, 500);
+}
+
+async function runRealtimeRefresh() {
+    if (realtimeRefreshTimer) {
+        clearTimeout(realtimeRefreshTimer);
+        realtimeRefreshTimer = null;
+    }
+
+    if (isFetching) {
+        realtimeRefreshQueued = true;
+        realtimeRefreshTimer = setTimeout(runRealtimeRefresh, 500);
+        return;
+    }
+
+    realtimeRefreshInProgress = true;
+    try {
+        await fetchLinks(false);
+    } finally {
+        realtimeRefreshInProgress = false;
+
+        if (realtimeRefreshQueued) {
+            realtimeRefreshQueued = false;
+            realtimeRefreshTimer = setTimeout(runRealtimeRefresh, 500);
+        }
+    }
 }
 
 async function handleSharedContent() {
