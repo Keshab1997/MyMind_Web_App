@@ -1,4 +1,5 @@
 import { supabase } from "../supabase_config.js";
+import { withSmartSpace } from "../lib/smart_spaces.js";
 
 const IMGBB_API_KEY = "3f28730505fe4abf28c082d23f395a1b";
 const CLOUD_NAME = "dchefh8xo";
@@ -173,13 +174,15 @@ async function uploadImageAndSave(file, title) {
         });
         const result = await response.json();
         if (result.success) {
-            const { error } = await supabase.from('mind_links').insert({
-                url: result.data.url,
-                title: title || "Shared Image",
-                image_url: result.data.url,
-                thumbnail_url: result.data.thumb.url,
-                tags: "Shared, Gallery"
-            });
+            const { error } = await supabase.from('mind_links').insert(
+                await withSmartSpace(supabase, {
+                    url: result.data.url,
+                    title: title || "Shared Image",
+                    image_url: result.data.url,
+                    thumbnail_url: result.data.thumb.url,
+                    tags: "Shared, Gallery"
+                }, { type: 'gallery' })
+            );
             if (!error) {
                 window.location.href = "../features/success_splash/index.html";
             }
@@ -208,13 +211,15 @@ async function saveLinkAutomatic(url, title) {
         } catch (e) {}
     }
     
-    const { error } = await supabase.from('mind_links').insert({
-        url: url,
-        title: finalTitle || "Shared Link",
-        image_url: finalImage,
-        description: finalDesc,
-        tags: "Shared, Link"
-    });
+    const { error } = await supabase.from('mind_links').insert(
+        await withSmartSpace(supabase, {
+            url: url,
+            title: finalTitle || "Shared Link",
+            image_url: finalImage,
+            description: finalDesc,
+            tags: "Shared, Link"
+        }, { url })
+    );
     
     if (!error) {
         window.location.href = "../features/success_splash/index.html";
@@ -593,14 +598,14 @@ saveBtn.onclick = async () => {
 
                         const { error } = await supabase
                             .from('mind_links')
-                            .insert({ 
+                            .insert(await withSmartSpace(supabase, { 
                                 url: finalUrl, 
                                 title: title || file.name, 
                                 note: note,
                                 image_url: thumbUrl,
                                 thumbnail_url: thumbUrl,
                                 tags: `Upload, ${typeTag}`
-                            });
+                            }, { type: 'gallery' }));
                         
                         if (!error) successCount++;
                     }
@@ -647,7 +652,7 @@ saveBtn.onclick = async () => {
             
             const { error } = await supabase
                 .from('mind_links')
-                .insert({ 
+                .insert(await withSmartSpace(supabase, { 
                     url: url, 
                     title: title || "Untitled", 
                     note: note,
@@ -655,7 +660,7 @@ saveBtn.onclick = async () => {
                     thumbnail_url: finalThumb,
                     description: finalDesc,
                     tags: finalTags
-                });
+                }, { url }));
 
             if (error) throw error;
 

@@ -2,6 +2,73 @@ const SUPABASE_URL = 'https://cmrgloxlyovihqhdxdls.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNtcmdsb3hseW92aWhxaGR4ZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg3NDQ2MDEsImV4cCI6MjA4NDMyMDYwMX0.-boSPxeSV4Q_6lX7rcXauRrpAw--YA-MGAH_IknXa84';
 const IMGBB_API_KEY = "3f28730505fe4abf28c082d23f395a1b";
 
+const SMART_SPACE_NAMES = {
+    youtube: 'YouTube',
+    instagram: 'Instagram',
+    facebook: 'Facebook',
+    links: 'Links',
+};
+
+const extSpaceCache = {};
+
+function detectSmartSpaceKey(url) {
+    try {
+        const host = new URL(url).hostname.toLowerCase();
+        if (host.includes('youtube.com') || host.includes('youtu.be')) return 'youtube';
+        if (host.includes('instagram.com')) return 'instagram';
+        if (host.includes('facebook.com') || host.includes('fb.watch')) return 'facebook';
+        return 'links';
+    } catch {
+        return 'links';
+    }
+}
+
+async function resolveSmartSpaceId(url, token, userId) {
+    const key = detectSmartSpaceKey(url);
+    const name = SMART_SPACE_NAMES[key];
+    if (!name) return null;
+    if (extSpaceCache[key]) return extSpaceCache[key];
+
+    const headers = {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${token}`,
+    };
+
+    const q = new URLSearchParams({
+        select: 'id',
+        user_id: `eq.${userId}`,
+        parent_id: 'is.null',
+        name: `eq.${name}`,
+    });
+
+    const findRes = await fetch(`${SUPABASE_URL}/rest/v1/spaces?${q}`, { headers });
+    if (findRes.ok) {
+        const rows = await findRes.json();
+        if (rows.length > 0) {
+            extSpaceCache[key] = rows[0].id;
+            return rows[0].id;
+        }
+    }
+
+    const createRes = await fetch(`${SUPABASE_URL}/rest/v1/spaces`, {
+        method: 'POST',
+        headers: {
+            ...headers,
+            'Content-Type': 'application/json',
+            Prefer: 'return=representation',
+        },
+        body: JSON.stringify({ name, parent_id: null, user_id: userId }),
+    });
+
+    if (createRes.ok) {
+        const created = await createRes.json();
+        const id = created[0]?.id;
+        if (id) extSpaceCache[key] = id;
+        return id;
+    }
+    return null;
+}
+
 let pageData = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -181,6 +248,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     autoTags += ", Article, Blog";
                 }
 
+                const spaceId = await resolveSmartSpaceId(url, session.access_token, session.user.id);
+                const payload = {
+                    url, 
+                    title: title || "Untitled", 
+                    note,
+                    image_url: imageUrl,
+                    thumbnail_url: imageUrl,
+                    description,
+                    user_id: session.user.id,
+                    tags: autoTags
+                };
+                if (spaceId) payload.space_id = spaceId;
+
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/mind_links`, {
                     method: 'POST',
                     headers: {
@@ -189,16 +269,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         'Content-Type': 'application/json',
                         'Prefer': 'return=minimal'
                     },
-                    body: JSON.stringify({
-                        url, 
-                        title: title || "Untitled", 
-                        note,
-                        image_url: imageUrl,
-                        thumbnail_url: imageUrl,
-                        description,
-                        user_id: session.user.id,
-                        tags: autoTags
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 if (res.ok) {

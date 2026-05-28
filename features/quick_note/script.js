@@ -1,4 +1,5 @@
 import { supabase } from "../../supabase_config.js";
+import { withSmartSpace } from "../../lib/smart_spaces.js";
 
 // Context menu block করা
 document.addEventListener('contextmenu', (e) => {
@@ -139,13 +140,15 @@ saveBtn.onclick = async () => {
     // Generate title from first line
     const title = text.split('\n')[0].substring(0, 40) + (text.length > 40 ? "..." : "");
     
-    const { error } = await supabase.from('mind_links').insert({
-        title: title,
-        note: text,
-        url: "",
-        tags: "Note, Quick Idea",
-        created_at: new Date()
-    });
+    const { error } = await supabase.from('mind_links').insert(
+        await withSmartSpace(supabase, {
+            title: title,
+            note: text,
+            url: "",
+            tags: "Note, Quick Idea",
+            created_at: new Date()
+        }, { type: 'notes' })
+    );
 
     if(!error) {
         window.location.href = "../success_splash/index.html";

@@ -1,4 +1,14 @@
 import { supabase } from "../../supabase_config.js";
+import { ensureSmartSpaces, backfillSmartSpaces, resolveSmartSpaceId } from "../../lib/smart_spaces.js";
+
+const SMART_FOLDER_NAMES = {
+    'YouTube': 'youtube',
+    'Instagram': 'instagram',
+    'Facebook': 'facebook',
+    'Gallery': 'gallery',
+    'Notes': 'notes',
+    'Links': 'links',
+};
 
 let currentParentId = null;
 let folderPath = [];
@@ -18,10 +28,16 @@ const spaceNameInput = document.getElementById('space-name-input');
 const backBtn = document.getElementById('back-btn');
 const breadcrumb = document.getElementById('breadcrumb');
 
-window.onload = () => {
+window.onload = async () => {
+    await ensureSmartSpaces(supabase);
     loadSpaces();
     setupEventListeners();
 };
+
+async function refreshSpacesWithBackfill() {
+    await backfillSmartSpaces(supabase);
+    await loadSpaces();
+}
 
 function setupEventListeners() {
     addSpaceBtn.onclick = () => {
@@ -81,39 +97,72 @@ async function loadSpaces() {
     spacesContainer.innerHTML = '<div class="loading">Loading spaces...</div>';
     updateBreadcrumb();
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+        spacesContainer.innerHTML = '<p>Please log in again.</p>';
+        return;
+    }
 
-    const { data: folders, error: foldersError } = await supabase
+    let foldersQuery = supabase
         .from('spaces')
         .select('*')
         .eq('user_id', user.id)
-        .is('parent_id', currentParentId)
         .order('created_at', { ascending: false });
 
-    const { data: items, error: itemsError } = await supabase
+    // Root: parent_id IS NULL. Inside folder: parent_id = current folder id.
+    if (currentParentId) {
+        foldersQuery = foldersQuery.eq('parent_id', currentParentId);
+    } else {
+        foldersQuery = foldersQuery.is('parent_id', null);
+    }
+
+    const { data: folders, error: foldersError } = await foldersQuery;
+
+    let items = [];
+    let itemsError = null;
+
+    let itemsQuery = supabase
         .from('mind_links')
         .select('*')
-        .eq('space_id', currentParentId || 'null')
         .order('created_at', { ascending: false });
 
-    if (foldersError || itemsError) {
-        spacesContainer.innerHTML = '<p>Error loading spaces</p>';
+    if (currentParentId) {
+        itemsQuery = itemsQuery.eq('space_id', currentParentId);
+        const result = await itemsQuery;
+        items = result.data;
+        itemsError = result.error;
+    }
+    // At root level, only show folders (items live inside platform folders)
+
+    if (foldersError) {
+        console.error('Spaces folders error:', foldersError);
+        spacesContainer.innerHTML = `<p>Error loading spaces: ${escapeHTML(foldersError.message)}</p>`;
         return;
+    }
+
+    if (itemsError) {
+        console.error('Spaces items error:', itemsError);
+        // Still show folders if items fail (e.g. missing space_id column)
     }
 
     spacesContainer.innerHTML = '';
 
-    if (folders.length === 0 && (!items || items.length === 0)) {
+    const folderList = folders || [];
+
+    if (folderList.length === 0 && (!items || items.length === 0)) {
+        const emptyMsg = currentParentId
+            ? 'No items in this space yet. Save a link to auto-sort here!'
+            : 'No spaces yet. Create one, or save a YouTube/Instagram link.';
         spacesContainer.innerHTML = `
             <div class="empty-state">
                 <span class="material-icons">folder_open</span>
-                <p>No spaces yet. Create one!</p>
+                <p>${emptyMsg}</p>
             </div>
         `;
         return;
     }
 
-    folders.forEach(folder => {
+    folderList.forEach(folder => {
         const folderCard = document.createElement('div');
         folderCard.className = 'folder-card';
         folderCard.innerHTML = `
@@ -145,10 +194,16 @@ async function loadSpaces() {
     }
 }
 
-function openFolder(folder) {
-    folderPath.push({ id: folder.id, name: folder.name });
-    currentParentId = folder.id;
-    loadSpaces();
+async function openFolder(folder) {
+    let folderId = folder.id;
+    const smartKey = SMART_FOLDER_NAMES[folder.name];
+    if (smartKey) {
+        const canonicalId = await resolveSmartSpaceId(supabase, { type: smartKey });
+        if (canonicalId) folderId = canonicalId;
+    }
+    folderPath.push({ id: folderId, name: folder.name });
+    currentParentId = folderId;
+    refreshSpacesWithBackfill();
 }
 
 function updateBreadcrumb() {
