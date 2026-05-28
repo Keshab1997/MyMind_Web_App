@@ -1,5 +1,5 @@
 import { supabase } from "./supabase_config.js";
-import { withSmartSpace } from "./lib/smart_spaces.js";
+import { withSmartSpace, detectSmartSpaceKey } from "./lib/smart_spaces.js";
 
 async function checkSession() {
     const { data: { session } } = await supabase.auth.getSession();
@@ -69,6 +69,8 @@ window.onload = async () => {
     setupSelectionMode();
     setupInfiniteScroll();
     loadSpacesForDropdown();
+    setupSmartSpaceDetection();
+    setupInlineSpaceCreation();
 };
 
 // Infinite Scroll Setup
@@ -83,6 +85,65 @@ function setupInfiniteScroll() {
             fetchLinks(true);
         }
     });
+}
+
+// Smart Space Name Mapping (for badge display)
+const SMART_SPACE_NAMES = {
+    youtube: 'YouTube',
+    instagram: 'Instagram',
+    facebook: 'Facebook',
+    tiktok: 'TikTok',
+    twitter: 'Twitter / X',
+    linkedin: 'LinkedIn',
+    gallery: 'Gallery',
+    notes: 'Notes',
+    links: 'Links',
+};
+
+// URL paste korlei auto-detect kore badge show korbe
+function setupSmartSpaceDetection() {
+    const urlInput = document.getElementById('input-url');
+    const smartBadge = document.getElementById('smart-space-badge');
+    const smartText = document.getElementById('smart-space-text');
+    const dropdown = document.getElementById('space-select-dropdown');
+    
+    if (!urlInput || !smartBadge || !smartText) return;
+    
+    urlInput.addEventListener('input', () => {
+        const url = urlInput.value.trim();
+        
+        if (!url) {
+            smartBadge.style.display = 'none';
+            if (dropdown) dropdown.value = '';
+            return;
+        }
+        
+        // Validate URL minimal
+        if (!url.startsWith('http://') && !url.startsWith('https://') && !url.includes('.')) {
+            smartBadge.style.display = 'none';
+            return;
+        }
+        
+        const spaceKey = detectSmartSpaceKey(url);
+        const spaceName = SMART_SPACE_NAMES[spaceKey] || 'Links';
+        
+        smartText.textContent = `Will auto-save to "${spaceName}"`;
+        smartBadge.style.display = 'flex';
+        
+        // Auto-select hobe na — user chaile manually dropdown theke select korte parbe
+        // dropdown stays at "Auto Sort"
+    });
+    
+    // Image select korle gallery detect
+    const fileInput = document.getElementById('file-input');
+    if (fileInput) {
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files && fileInput.files.length > 0) {
+                smartText.textContent = 'Will auto-save to "Gallery"';
+                smartBadge.style.display = 'flex';
+            }
+        });
+    }
 }
 
 // Load spaces for dropdown
@@ -128,6 +189,93 @@ async function loadSpacesForDropdown() {
         option.value = s.id;
         option.textContent = s.fullPath;
         dropdown.appendChild(option);
+    });
+}
+
+// Inline Space Creation
+function setupInlineSpaceCreation() {
+    const newSpaceBtn = document.getElementById('new-space-inline-btn');
+    const inlineForm = document.getElementById('inline-create-space');
+    const inlineName = document.getElementById('inline-space-name');
+    const confirmBtn = document.getElementById('inline-create-confirm');
+    const cancelBtn = document.getElementById('inline-create-cancel');
+    
+    if (!newSpaceBtn || !inlineForm) return;
+    
+    newSpaceBtn.onclick = () => {
+        inlineForm.style.display = 'flex';
+        inlineName.focus();
+    };
+    
+    cancelBtn.onclick = () => {
+        inlineForm.style.display = 'none';
+        inlineName.value = '';
+    };
+    
+    confirmBtn.onclick = async () => {
+        const name = inlineName.value.trim();
+        if (!name) {
+            alert('Please enter a space name');
+            return;
+        }
+        
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Creating...';
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            alert('Not logged in');
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Create';
+            return;
+        }
+        
+        const { data: created, error } = await supabase
+            .from('spaces')
+            .insert({
+                name: name,
+                parent_id: null,
+                user_id: user.id
+            })
+            .select('id')
+            .single();
+        
+        if (error) {
+            alert('Error: ' + error.message);
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Create';
+            return;
+        }
+        
+        // Refresh dropdown and auto-select the new space
+        await loadSpacesForDropdown();
+        
+        const dropdown = document.getElementById('space-select-dropdown');
+        if (dropdown && created) {
+            dropdown.value = created.id;
+        }
+        
+        // Hide inline form
+        inlineForm.style.display = 'none';
+        inlineName.value = '';
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Create';
+        
+        // Update smart badge
+        const smartBadge = document.getElementById('smart-space-badge');
+        const smartText = document.getElementById('smart-space-text');
+        if (smartBadge && smartText) {
+            smartText.textContent = `Saving to "${name}" (manual select)`;
+            smartBadge.style.display = 'flex';
+        }
+    };
+    
+    // Enter key submit
+    inlineName.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            confirmBtn.click();
+        }
     });
 }
 
@@ -343,7 +491,12 @@ async function saveLinkAutomatic(url, title) {
             const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(url)}`);
             const meta = await res.json();
             if (meta.status === 'success') {
-                if (meta.data.image) finalImage = meta.data.image.url;
+                if (meta.data.image) {
+                    const microlinkImage = meta.data.image.url;
+                    if (!shouldSkipRemoteImage(microlinkImage)) {
+                        finalImage = microlinkImage;
+                    }
+                }
                 if (!finalTitle && meta.data.title) finalTitle = meta.data.title;
                 if (meta.data.description) finalDesc = meta.data.description;
             }
@@ -584,8 +737,15 @@ function renderFeed(dataList, isAppend = false) {
             if (!imageUrl) {
                 imageUrl = getYouTubeThumbnail(item.url);
             }
-            if (imageUrl && shouldSkipRemoteImage(imageUrl)) {
-                imageUrl = null;
+            // Removed shouldSkipRemoteImage — let img.onerror handle broken images gracefully
+
+            // Pre-compute favicon fallback (used both when no image and when image fails to load)
+            let favicon = "";
+            try {
+                const domain = new URL(item.url).hostname;
+                favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+            } catch (e) {
+                favicon = "https://cdn-icons-png.flaticon.com/512/3062/3062634.png";
             }
 
             const cardHeader = document.createElement('div');
@@ -598,17 +758,21 @@ function renderFeed(dataList, isAppend = false) {
                 img.loading = 'lazy';
                 img.decoding = 'async';
                 img.referrerPolicy = 'no-referrer';
-                img.onerror = () => img.style.display = 'none';
+                // On error: replace the broken image with a favicon fallback placeholder
+                img.onerror = () => {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'card-placeholder';
+                    placeholder.style.backgroundColor = getRandomColor();
+                    const faviconImg = document.createElement('img');
+                    faviconImg.src = favicon;
+                    faviconImg.className = 'favicon-img';
+                    faviconImg.referrerPolicy = 'no-referrer';
+                    placeholder.appendChild(faviconImg);
+                    cardHeader.innerHTML = '';
+                    cardHeader.appendChild(placeholder);
+                };
                 cardHeader.appendChild(img);
             } else {
-                let favicon = "";
-                try {
-                    const domain = new URL(item.url).hostname;
-                    favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-                } catch (e) {
-                    favicon = "https://cdn-icons-png.flaticon.com/512/3062/3062634.png";
-                }
-                
                 const placeholder = document.createElement('div');
                 placeholder.className = 'card-placeholder';
                 placeholder.style.backgroundColor = getRandomColor();
@@ -697,19 +861,66 @@ function getYouTubeThumbnail(url) {
 }
 
 // মোডাল লজিক
-document.getElementById('open-modal-btn').onclick = () => modal.style.display = 'flex';
+document.getElementById('open-modal-btn').onclick = () => {
+    modal.style.display = 'flex';
+    // Reset smart badge when opening modal
+    const smartBadge = document.getElementById('smart-space-badge');
+    const inlineForm = document.getElementById('inline-create-space');
+    if (smartBadge) smartBadge.style.display = 'none';
+    if (inlineForm) inlineForm.style.display = 'none';
+    const dropdown = document.getElementById('space-select-dropdown');
+    if (dropdown) dropdown.value = '';
+};
 document.getElementById('cancel-btn').onclick = closeModal;
+
+// Dropdown change handler — update smart badge
+document.addEventListener('DOMContentLoaded', () => {
+    const dropdown = document.getElementById('space-select-dropdown');
+    if (!dropdown) return;
+    
+    dropdown.addEventListener('change', () => {
+        const smartBadge = document.getElementById('smart-space-badge');
+        const smartText = document.getElementById('smart-space-text');
+        if (!smartBadge || !smartText) return;
+        
+        if (dropdown.value === '') {
+            // Auto mode — re-detect from URL
+            const url = document.getElementById('input-url').value.trim();
+            if (url && (url.startsWith('http') || url.includes('.'))) {
+                const spaceKey = detectSmartSpaceKey(url);
+                const spaceName = SMART_SPACE_NAMES[spaceKey] || 'Links';
+                smartText.textContent = `Will auto-save to "${spaceName}"`;
+                smartBadge.style.display = 'flex';
+            } else {
+                smartBadge.style.display = 'none';
+            }
+        } else {
+            const selectedText = dropdown.options[dropdown.selectedIndex].textContent;
+            smartText.textContent = `Saving to "${selectedText}"`;
+            smartBadge.style.display = 'flex';
+        }
+    });
+});
 
 function closeModal() {
     modal.style.display = 'none';
     urlInput.value = "";
     document.getElementById('input-title').value = "";
     document.getElementById('input-note').value = "";
+    document.getElementById('space-select-dropdown').value = "";
     selectedFiles = [];
     fileInput.value = "";
     renderPreviews();
     urlInput.disabled = false;
     urlInput.placeholder = "Paste Link (YouTube, Insta...)";
+    
+    // Reset smart badge and inline create form
+    const smartBadge = document.getElementById('smart-space-badge');
+    const inlineForm = document.getElementById('inline-create-space');
+    const inlineName = document.getElementById('inline-space-name');
+    if (smartBadge) smartBadge.style.display = 'none';
+    if (inlineForm) inlineForm.style.display = 'none';
+    if (inlineName) inlineName.value = '';
 }
 
 // --- 3. ডাটা সেভ করা (Multi-Upload সহ) ---

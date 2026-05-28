@@ -367,52 +367,68 @@ function renderFeed(dataList) {
                 </div>
             `;
         } else {
-            // Regular link/image card
+            // Regular link/image card (DOM API for safe image error handling)
             card.className = 'card';
-        
-            // থাম্বনেইল লজিক: ডাটাবেসে ছবি থাকলে সেটা নিবে, না থাকলে ইউটিউব চেক করবে
-            let imageUrl = item.thumbnail_url || item.image_url; 
-            
-            // যদি ডাটাবেসে ছবি না থাকে (পুরানো লিংকের জন্য), তাহলে ম্যানুয়ালি চেক করবে
+
+            let imageUrl = item.thumbnail_url || item.image_url;
             if (!imageUrl) {
                 imageUrl = getYouTubeThumbnail(item.url);
             }
+            // Removed shouldSkipRemoteImage — let img.onerror handle broken images gracefully
 
-            let imageHTML = '';
-
-            if (imageUrl) {
-                // ছবি পাওয়া গেলে
-                imageHTML = `<img src="${imageUrl}" class="thumb-img" alt="Thumbnail" loading="lazy" onload="this.classList.add('loaded'); this.parentElement.classList.add('loaded');" onerror="this.style.display='none'">`;
-            } else {
-                // ছবি না পাওয়া গেলে লোগো দেখাবে
-                let favicon = "";
-                try {
-                    const domain = new URL(item.url).hostname;
-                    favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-                } catch (e) {
-                    favicon = "https://cdn-icons-png.flaticon.com/512/3062/3062634.png"; // Default icon
-                }
-                
-                setTimeout(() => {
-                    const header = card.querySelector('.card-header');
-                    if(header) header.classList.add('loaded');
-                }, 100);
-                
-                imageHTML = `
-                    <div class="card-placeholder" style="background-color: ${getRandomColor()}">
-                        <img src="${favicon}" class="favicon-img" alt="Icon">
-                    </div>`;
+            let favicon = "";
+            try {
+                const domain = new URL(item.url).hostname;
+                favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+            } catch (e) {
+                favicon = "https://cdn-icons-png.flaticon.com/512/3062/3062634.png";
             }
 
-            card.innerHTML = `
-                <div class="card-header">
-                    ${imageHTML}
-                </div>
-                <div class="card-content">
-                    <div class="card-title">${item.title}</div>
-                    <div class="card-link">${item.url}</div>
-                </div>
+            const cardHeader = document.createElement('div');
+            cardHeader.className = 'card-header';
+
+            if (imageUrl) {
+                const img = document.createElement('img');
+                img.src = imageUrl;
+                img.className = 'thumb-img';
+                img.alt = 'Thumbnail';
+                img.loading = 'lazy';
+                img.decoding = 'async';
+                img.referrerPolicy = 'no-referrer';
+                img.onerror = () => {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'card-placeholder';
+                    placeholder.style.backgroundColor = getRandomColor();
+                    const fav = document.createElement('img');
+                    fav.src = favicon;
+                    fav.className = 'favicon-img';
+                    fav.alt = 'Icon';
+                    placeholder.appendChild(fav);
+                    cardHeader.innerHTML = '';
+                    cardHeader.appendChild(placeholder);
+                };
+                cardHeader.appendChild(img);
+            } else {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'card-placeholder';
+                placeholder.style.backgroundColor = getRandomColor();
+                const fav = document.createElement('img');
+                fav.src = favicon;
+                fav.className = 'favicon-img';
+                fav.alt = 'Icon';
+                placeholder.appendChild(fav);
+                cardHeader.appendChild(placeholder);
+            }
+
+            const cardContent = document.createElement('div');
+            cardContent.className = 'card-content';
+            cardContent.innerHTML = `
+                <div class="card-title">${item.title}</div>
+                <div class="card-link">${item.url}</div>
             `;
+
+            card.appendChild(cardHeader);
+            card.appendChild(cardContent);
         }
         
         // Click & Long Press Logic
@@ -511,6 +527,23 @@ function getYouTubeThumbnail(url) {
         console.warn('Error parsing YouTube URL:', e);
     }
     return null;
+}
+
+// Skip images from known-broken CDNs (Instagram/Facebook) or unsupported formats (HEIC/HEIF)
+function shouldSkipRemoteImage(url) {
+    if (!url) return true;
+    try {
+        const u = new URL(url);
+        const host = u.hostname.toLowerCase();
+        if (host.includes('cdninstagram.com') || host.includes('fbcdn.net') || host.includes('instagram.com')) {
+            return true;
+        }
+        const path = u.pathname.toLowerCase();
+        if (path.endsWith('.heic') || path.endsWith('.heif')) return true;
+        return false;
+    } catch {
+        return true;
+    }
 }
 
 // মোডাল লজিক
@@ -652,9 +685,9 @@ saveBtn.onclick = async () => {
             
             const { error } = await supabase
                 .from('mind_links')
-                .insert(await withSmartSpace(supabase, { 
-                    url: url, 
-                    title: title || "Untitled", 
+                .insert(await withSmartSpace(supabase, {
+                    url: url,
+                    title: title || "Untitled",
                     note: note,
                     image_url: finalImage,
                     thumbnail_url: finalThumb,

@@ -507,6 +507,100 @@ textarea {
     background: #FFCDD2;
 }
 
+/* Space Selector Container */
+.space-selector-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.space-select-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.space-dropdown {
+    flex: 1;
+}
+
+#new-space-inline-btn {
+    flex-shrink: 0;
+}
+
+/* Smart Space Detection Badge */
+.smart-space-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, #F3E5F5, #E8EAF6);
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4A148C;
+    border: 1px solid rgba(74, 20, 140, 0.15);
+    animation: fadeInBadge 0.3s ease-out;
+}
+
+.smart-space-badge .material-icons {
+    font-size: 18px;
+    color: #FF9800;
+}
+
+@keyframes fadeInBadge {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Inline Create Space */
+.inline-create-space {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background: #F5F5F5;
+    border-radius: 12px;
+    animation: fadeInBadge 0.3s ease-out;
+}
+
+.inline-create-space input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 13px;
+}
+
+.inline-create-space input:focus {
+    outline: none;
+    border-color: #FF9800;
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+}
+
+button.small {
+    padding: 8px 14px;
+    font-size: 12px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
+.cancel-small {
+    background: transparent;
+    color: #999;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+.cancel-small:hover {
+    background: rgba(0,0,0,0.08);
+    color: #333;
+}
+
 .modal-actions {
     display: flex;
     justify-content: flex-end;

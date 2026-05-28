@@ -69,9 +69,25 @@
             </div>
             <input type="text" id="input-title" placeholder="Title">
             <textarea id="input-note" placeholder="Add a note..."></textarea>
-            <select id="space-select-dropdown" class="space-dropdown">
-                <option value="">Auto Sort (Smart Space)</option>
-            </select>
+            <div id="space-selector-container" class="space-selector-container">
+                <div id="smart-space-badge" class="smart-space-badge" style="display:none;">
+                    <span class="material-icons">auto_awesome</span>
+                    <span id="smart-space-text"></span>
+                </div>
+                <div class="space-select-row">
+                    <select id="space-select-dropdown" class="space-dropdown">
+                        <option value="">Auto Sort (Smart Space)</option>
+                    </select>
+                    <button id="new-space-inline-btn" class="icon-btn-small" title="Create New Space">
+                        <span class="material-icons">create_new_folder</span>
+                    </button>
+                </div>
+                <div id="inline-create-space" class="inline-create-space" style="display:none;">
+                    <input type="text" id="inline-space-name" placeholder="New space name">
+                    <button id="inline-create-confirm" class="primary small">Create</button>
+                    <button id="inline-create-cancel" class="cancel-small">✕</button>
+                </div>
+            </div>
             <div class="modal-actions">
                 <button id="cancel-btn">Cancel</button>
                 <button id="save-btn" class="primary">Save</button>
